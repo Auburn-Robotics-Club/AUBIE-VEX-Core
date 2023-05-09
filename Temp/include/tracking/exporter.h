@@ -1,8 +1,7 @@
 // Look into these functions found in v5_api.h
   //vexDeviceGetByIndex(0);
   //vexSerialReadChar(9600);
-#ifndef __ROBOTFUNCTIONS_H_
-#define __ROBOTFUNCTIONS_H_
+#pragma once
 #include "robotmath.h"
 
 template <typename LE, typename RE, typename HE>
@@ -222,5 +221,3 @@ public:
     return (360 - getHeading());
   }*/
 };
-
-#endif

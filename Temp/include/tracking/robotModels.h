@@ -1,5 +1,4 @@
-#ifndef __ROBOTMODELS_H__
-#define __ROBOTMODELS_H__
+#pragma once
 
 /*
 Name: robotModels.h
@@ -449,4 +448,3 @@ class XDrive : public Robot{
       }
     }
 };
-#endif

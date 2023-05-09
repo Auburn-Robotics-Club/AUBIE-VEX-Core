@@ -1,5 +1,4 @@
-#ifndef __LOCATOR_H__
-#define __LOCATOR_H__
+#pragma once
 
 /*
 Name: navigation.h
@@ -22,18 +21,6 @@ Event Poitns where a call back will occur upon arriving or crossing at a point
 
 #include "robotmath.h"
 #include "logger.h"
-
-bool operator==(const positionSet& a, const positionSet& b){
-  if((fabs(a.p.x - b.p.x) < 0.0001) && (fabs(a.p.y - b.p.y) < 0.0001) && (fabs(a.head - b.head) < 0.0001)){
-    return true;
-  }else{
-    return false;
-  }
-}
-
-bool operator!=(const positionSet& a, const positionSet& b){
-  return !(a == b);
-}
 
 class Navigator{
 protected:
@@ -555,5 +542,3 @@ public:
     linTimedOut = false;
   }
 };
-
-#endif

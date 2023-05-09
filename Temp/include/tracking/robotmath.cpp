@@ -1,14 +1,14 @@
 #include "tracking/robotmath.h"
 
-double clamp(double x, double min, double max){
+int clamp(int x, int min, int max){
   if(x < min){return min;}
   if(x > max){return max;}
   return x;
 }
 
-double clamp(double x, double lim, bool isMax){
-  if(!isMax && x < lim){return lim;}
-  if(isMax && x > lim){return lim;}
+double fclamp(double x, double min, double max){
+  if(x < min){return min;}
+  if(x > max){return max;}
   return x;
 }
 
@@ -154,6 +154,28 @@ double EWMAFilter::getAvg(double dataIn){
   double r = (1-k)*lastData + k*dataIn;
   lastData = dataIn;
   return r;
+}
+
+void BasePIDController::setTarget(double targetSpeed, double initSetValue){
+  target = targetSpeed;
+  setValue = initSetValue;
+  lastError = 0;
+  initalized = false;
+}
+
+double BasePIDController::update(double currentValue, double deltaTime){
+  double error = target - currentValue;
+  if(!initalized){lastError = error; initalized=true;}
+
+  double deltaError = error - lastError;
+  lastError = error;
+
+  setValue = clamp(setValue + kI * error * deltaTime, minOutput, maxOutput);
+  
+  output = clamp(
+            (kP * error) + (setValue) + (kD * deltaError / deltaTime), 
+            minOutput, maxOutput);
+  return output;
 }
 
 //--------------------------------------------------------------------------------------------------

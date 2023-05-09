@@ -1,8 +1,8 @@
-#ifndef __ROBOTMATH_H__
-#define __ROBOTMATH_H__
+#pragma once
 #include "math.h"
 #include <algorithm>
 #include <vector>
+#include <sstream>
 
 /*
 Name: robotmath.h
@@ -13,10 +13,8 @@ Defines abstract mathmatical concepts and algorithms relevent to robot control. 
 */
 
 //Returns x if within min/max else return min/max
-double clamp(double x, double min, double max);
-
-//Same as clamp execept it treats lim as a min or max accoring to isMax
-double clamp(double x, double lim, bool isMax);
+int clamp(int x, int min, int max);
+double fclamp(double x, double min, double max);
 
 //sign - returns 1 if input >= 0; -1 if input < 0
 int sign(int x);
@@ -50,7 +48,7 @@ class EWMAFilter; //Faster, less memory; Exponetinally weighted moving average f
 //Kalman filter
 class BasePIDController;
 //SloshPIDController - Limits change of output
-//
+//BamBamController
 //For more reading: https://pidexplained.com/how-to-tune-a-pid-controller/
 
 class SMAFilter{
@@ -92,15 +90,21 @@ protected:
   double kI;
   double kD;
 
-  double lastTime;
+  double target;
+  double error;
+
   double setValue;
+
+  bool initalized;
   double lastError;
-
-
+  
   double minOutput; //Limits output and setvalue
   double maxOutput;
+
+  double output;
 public:
-  //TODO
+  void setTarget(double targetValue, double initSetValue=0);
+  double update(double currentValue, double deltaTime);
 };
 
 
@@ -174,4 +178,12 @@ class Vector2d{
     Point2d operator - (Point2d &p);
 };
 
-#endif
+std::ostream& operator << (std::ostream& os, Vector2d v){
+  os << "<" << v.getX() << ", " << v.getY() << ">";
+  return os;
+}
+
+std::ostream& operator << (std::ostream& os, Point2d p){
+  os << "(" << p.x << ", " << p.y << ")";
+  return os;
+}

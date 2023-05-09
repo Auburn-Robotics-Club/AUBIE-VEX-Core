@@ -240,9 +240,13 @@ Discarded input sections
  .group         0x00000000        0x8 build/src/main.o
  .llvm_addrsig  0x00000000       0x64 build/src/main.o
  .text          0x00000000        0x0 build/include/tracking/robotmath.o
- .text._Z5clampddd
+ .text._Z5clampiii
+                0x00000000       0x18 build/include/tracking/robotmath.o
+ .ARM.exidx.text._Z5clampiii
+                0x00000000        0x8 build/include/tracking/robotmath.o
+ .text._Z6fclampddd
                 0x00000000       0x30 build/include/tracking/robotmath.o
- .ARM.exidx.text._Z5clampddd
+ .ARM.exidx.text._Z6fclampddd
                 0x00000000        0x8 build/include/tracking/robotmath.o
  .text._Z4signi
                 0x00000000       0x14 build/include/tracking/robotmath.o
@@ -282,15 +286,15 @@ Discarded input sections
  .ARM.exidx.text._ZN9SMAFilter6getAvgEv
                 0x00000000        0x8 build/include/tracking/robotmath.o
  .text._ZN10EWMAFilterC2Ed
-                0x00000000       0x2c build/include/tracking/robotmath.o
+                0x00000000       0x28 build/include/tracking/robotmath.o
  .ARM.exidx.text._ZN10EWMAFilterC2Ed
                 0x00000000        0x8 build/include/tracking/robotmath.o
  .text._ZN10EWMAFilter4setKEd
-                0x00000000       0x2c build/include/tracking/robotmath.o
+                0x00000000       0x28 build/include/tracking/robotmath.o
  .ARM.exidx.text._ZN10EWMAFilter4setKEd
                 0x00000000        0x8 build/include/tracking/robotmath.o
  .text._ZN10EWMAFilterC2Edd
-                0x00000000       0x34 build/include/tracking/robotmath.o
+                0x00000000       0x2c build/include/tracking/robotmath.o
  .ARM.exidx.text._ZN10EWMAFilterC2Edd
                 0x00000000        0x8 build/include/tracking/robotmath.o
  .text._ZN10EWMAFilter4getKEv

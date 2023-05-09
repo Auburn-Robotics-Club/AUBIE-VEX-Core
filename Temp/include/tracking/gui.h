@@ -1,5 +1,4 @@
-#ifndef __GUI_H_
-#define __GUI_H_
+#pragma once
 
 extern vex::brain Brain;
 using namespace vex;
@@ -149,7 +148,3 @@ void drawFrisbeeButton(int x, int y, int w, int h, bool press){
     Brain.Screen.drawRectangle(x, y, w, h);
   }
 }
-
-
-
-#endif
