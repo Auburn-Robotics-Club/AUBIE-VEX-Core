@@ -297,3 +297,13 @@ Point2d Vector2d::operator+(Point2d &p) {
 Point2d Vector2d::operator-(Point2d &p) {
   return Point2d(p.x - getX(), p.y - getY());
 }
+
+std::ostream& operator << (std::ostream& os, Vector2d v){
+  os << "<" << v.getX() << ", " << v.getY() << ">";
+  return os;
+}
+
+std::ostream& operator << (std::ostream& os, Point2d p){
+  os << "(" << p.x << ", " << p.y << ")";
+  return os;
+}

@@ -178,12 +178,5 @@ class Vector2d{
     Point2d operator - (Point2d &p);
 };
 
-std::ostream& operator << (std::ostream& os, Vector2d v){
-  os << "<" << v.getX() << ", " << v.getY() << ">";
-  return os;
-}
-
-std::ostream& operator << (std::ostream& os, Point2d p){
-  os << "(" << p.x << ", " << p.y << ")";
-  return os;
-}
+std::ostream& operator << (std::ostream& os, Vector2d v);
+std::ostream& operator << (std::ostream& os, Point2d p);
