@@ -1,5 +1,7 @@
 #include "tracking/robotmath.h"
 
+//Misc Functions
+//--------------------------------------------------------------------------------------------------
 int clamp(int x, int min, int max){
   if(x < min){return min;}
   if(x > max){return max;}
@@ -93,8 +95,8 @@ double shortestArcToLine(double currentHeading, double targetHeading, bool inDeg
   }
 }
 
-//--------------------------------------------------------------------------------------------------
-
+//SMAFilter
+//-------------------------------------------------------------------------------------------------
 SMAFilter::SMAFilter(int size) { 
   changeSize(size, 0); 
 }
@@ -129,6 +131,8 @@ double SMAFilter::getAvg() {
   return sum / s;
 }
 
+//EWMAFilter
+//--------------------------------------------------------------------------------------------------
 EWMAFilter::EWMAFilter(double kIn){
   setK(kIn);
 }
@@ -156,6 +160,8 @@ double EWMAFilter::getAvg(double dataIn){
   return r;
 }
 
+//BasePIDController
+//--------------------------------------------------------------------------------------------------
 void BasePIDController::setTarget(double targetSpeed, double initSetValue){
   target = targetSpeed;
   setValue = initSetValue;
@@ -178,15 +184,29 @@ double BasePIDController::update(double currentValue, double deltaTime){
   return output;
 }
 
-//--------------------------------------------------------------------------------------------------
 
-// Point Class (Stores X and Y coordnates)
+//Point2d
+//--------------------------------------------------------------------------------------------------
 Point2d::Point2d(double X, double Y) {
   x = X;
   y = Y;
 }
 
-// Vector Class (Repersents a Vector and allows vector operations to be performed)
+Point2d Vector2d::operator+(Point2d &p) {
+  return Point2d(p.x + getX(), p.y + getY());
+}
+
+Point2d Vector2d::operator-(Point2d &p) {
+  return Point2d(p.x - getX(), p.y - getY());
+}
+
+std::ostream& operator << (std::ostream& os, Point2d p){
+  os << "(" << p.x << ", " << p.y << ")";
+  return os;
+}
+
+//Vector2d
+//--------------------------------------------------------------------------------------------------
 
 // Define Vector by using dX and dY
 Vector2d::Vector2d(double delta_x, double delta_y) {
@@ -289,21 +309,7 @@ Vector2d Vector2d::operator*(double scalar) {
   return Vector2d(deltaX * scalar, deltaY * scalar);
 }
 
-// Returns a new point that results from adding a vector from a point (this +
-// point)
-Point2d Vector2d::operator+(Point2d &p) {
-  return Point2d(p.x + getX(), p.y + getY());
-}
-Point2d Vector2d::operator-(Point2d &p) {
-  return Point2d(p.x - getX(), p.y - getY());
-}
-
 std::ostream& operator << (std::ostream& os, Vector2d v){
   os << "<" << v.getX() << ", " << v.getY() << ">";
-  return os;
-}
-
-std::ostream& operator << (std::ostream& os, Point2d p){
-  os << "(" << p.x << ", " << p.y << ")";
   return os;
 }

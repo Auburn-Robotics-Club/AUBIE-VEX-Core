@@ -12,6 +12,15 @@ Defines abstract mathmatical concepts and algorithms relevent to robot control. 
 
 */
 
+//Constants
+//--------------------------------------------------------------------------------------------------
+const double M_2PI = 2*M_PI;
+const double M_PI_180 = M_PI/180;
+const double M_180_PI = 180/M_PI;
+
+//Misc Functions
+//--------------------------------------------------------------------------------------------------
+
 //Returns x if within min/max else return min/max
 int clamp(int x, int min, int max);
 double fclamp(double x, double min, double max);
@@ -21,9 +30,6 @@ int sign(int x);
 double sign(double x);
 
 //Angles
-const double M_2PI = 2*M_PI;
-const double M_PI_180 = M_PI/180;
-const double M_180_PI = 180/M_PI;
 
 //Converts degrees to radians
 double degToRad(double degrees);
@@ -42,15 +48,15 @@ double shortestArcToLine(double currentHeading, double targetHeading, bool inDeg
 
 //--------------------------------------------------------------------------------------------------
 
-class SMAFilter; //More stable; Simple Moving Average filter
-class EWMAFilter; //Faster, less memory; Exponetinally weighted moving average filter - https://hackaday.com/2019/09/06/sensor-filters-for-coders/
 //Moving median filter - Less suseptiable to shocks
 //Kalman filter
-class BasePIDController;
 //SloshPIDController - Limits change of output
 //BamBamController
 //For more reading: https://pidexplained.com/how-to-tune-a-pid-controller/
 
+//SMAFilter 
+//More stable; Simple Moving Average filter
+//--------------------------------------------------------------------------------------------------
 class SMAFilter{
 protected:
   std::vector<double> data;
@@ -68,6 +74,9 @@ public:
   double getAvg();
 };
 
+//EWMAFilter 
+//Faster, less memory; Exponetinally weighted moving average filter - https://hackaday.com/2019/09/06/sensor-filters-for-coders/
+//--------------------------------------------------------------------------------------------------
 class EWMAFilter{
 protected:
   double k;
@@ -84,6 +93,8 @@ public:
   double getAvg(double dataIn);
 };
 
+//BasePIDController
+//--------------------------------------------------------------------------------------------------
 class BasePIDController{
 protected:
   double kP;
@@ -108,9 +119,8 @@ public:
 };
 
 
+//Point2d
 //--------------------------------------------------------------------------------------------------
-
-//Point Class (Stores X and Y coordnates)
 class Point2d{
   public:
     double x;
@@ -118,7 +128,10 @@ class Point2d{
     Point2d(double X, double Y);
 };
 
-//Vector Class (Repersents a Vector and allows vector operations to be performed)
+std::ostream& operator << (std::ostream& os, Point2d p);
+
+//Vector2d
+//--------------------------------------------------------------------------------------------------
 class Vector2d{
   private:
     double deltaX; //Change in X repersented by the vector
@@ -179,4 +192,3 @@ class Vector2d{
 };
 
 std::ostream& operator << (std::ostream& os, Vector2d v);
-std::ostream& operator << (std::ostream& os, Point2d p);

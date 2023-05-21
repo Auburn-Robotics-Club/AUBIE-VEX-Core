@@ -1,5 +1,26 @@
 #include "tracking/logger.h"
 
+//positionSet
+//--------------------------------------------------------------------------------------------------
+std::ostream& operator << (std::ostream& os, positionSet p){
+  os << "(" << p.p.x << ", " << p.p.y << ", " << p.head << ")";
+  return os;
+}
+
+bool operator==(const positionSet& a, const positionSet& b){
+  if((fabs(a.p.x - b.p.x) < 0.0001) && (fabs(a.p.y - b.p.y) < 0.0001) && (fabs(a.head - b.head) < 0.0001)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool operator!=(const positionSet& a, const positionSet& b){
+  return !(a == b);
+}
+
+//Log
+//--------------------------------------------------------------------------------------------------
 std::string replaceStr(std::string str, const std::string& from, const std::string& to) {
   size_t start_pos = 0;
   while((start_pos = str.find(from, start_pos)) != std::string::npos) {
@@ -182,21 +203,4 @@ void Log::error(std::string label, std::string data){
     result.shrink_to_fit();
     internalString += result;
   }
-}
-
-std::ostream& operator << (std::ostream& os, positionSet p){
-  os << "(" << p.p.x << ", " << p.p.y << ", " << p.head << ")";
-  return os;
-}
-
-bool operator==(const positionSet& a, const positionSet& b){
-  if((fabs(a.p.x - b.p.x) < 0.0001) && (fabs(a.p.y - b.p.y) < 0.0001) && (fabs(a.head - b.head) < 0.0001)){
-    return true;
-  }else{
-    return false;
-  }
-}
-
-bool operator!=(const positionSet& a, const positionSet& b){
-  return !(a == b);
 }
