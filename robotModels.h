@@ -12,9 +12,9 @@ Smooth path transitions between points when setting veloctity
 build in support releying current vel for accel if jumping becoems an issue
 */
 
-#include "robotmath.h"
-#include "logger.h"
-#include "navigation.h"
+#include "AUBIE-VEX-CORE/robotmath.h"
+#include "AUBIE-VEX-CORE/logger.h"
+#include "AUBIE-VEX-CORE/navigation.h"
 
 #include "v5.h"
 #include "v5_vcs.h"

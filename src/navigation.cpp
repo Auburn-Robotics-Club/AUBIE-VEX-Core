@@ -1,4 +1,4 @@
-#include "navigation.h"
+#include "AUBIE-VEX-CORE/navigation.h"
 
 // TrackingBase
 //--------------------------------------------------------------------------------------------------

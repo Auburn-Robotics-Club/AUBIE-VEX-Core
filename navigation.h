@@ -1,7 +1,7 @@
 #pragma once
 
-#include "robotmath.h"
-#include "logger.h"
+#include "AUBIE-VEX-CORE/robotmath.h"
+#include "AUBIE-VEX-CORE/logger.h"
 #include "v5.h"
 #include "v5_vcs.h"
 
