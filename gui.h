@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ROBOT_GUI_H
+#define ROBOT_GUI_H
 
 extern vex::brain Brain;
 using namespace vex;
@@ -120,7 +121,7 @@ class ButtonGUI {
 
 void drawLoadingScreen(){
   Brain.Screen.clearScreen();
-  if(Brain.SDcard.isInserted()){
+  if(Brain.SDcard.isInserted() && Brain.SDcard.exists("images/brainscreen_loading.png")){
     Brain.Screen.drawImageFromFile("images/brainscreen_loading.png", 0, 0);
   } else {
 
@@ -129,7 +130,7 @@ void drawLoadingScreen(){
 
 void drawSelectingScreen(){
   Brain.Screen.clearScreen();
-  if(Brain.SDcard.isInserted()){
+  if(Brain.SDcard.isInserted() && Brain.SDcard.exists("images/brainscreen_selecting.png")){
     Brain.Screen.drawImageFromFile("images/brainscreen_selecting.png", 0, 0);
   }  else {
 
@@ -137,7 +138,7 @@ void drawSelectingScreen(){
 }
 
 void drawFrisbeeButton(int x, int y, int w, int h, bool press){
-  if(Brain.SDcard.isInserted()){
+  if(Brain.SDcard.isInserted() && Brain.SDcard.exists("images/button.png")){
     Brain.Screen.drawImageFromFile("images/button.png", x, y);
   }  else {
     if(press){
@@ -148,3 +149,5 @@ void drawFrisbeeButton(int x, int y, int w, int h, bool press){
     Brain.Screen.drawRectangle(x, y, w, h);
   }
 }
+
+#endif

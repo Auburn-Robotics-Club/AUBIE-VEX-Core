@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ROBOT_MATH_H
+#define ROBOT_MATH_H
+
 #include "math.h"
 #include <algorithm>
 #include <vector>
@@ -192,3 +194,5 @@ class Vector2d{
 };
 
 std::ostream& operator << (std::ostream& os, Vector2d v);
+
+#endif

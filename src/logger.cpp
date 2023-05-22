@@ -1,5 +1,7 @@
 #include "AUBIE-VEX-CORE/logger.h"
 
+Log coreLogger = Log();
+
 //positionSet
 //--------------------------------------------------------------------------------------------------
 std::ostream& operator << (std::ostream& os, positionSet p){

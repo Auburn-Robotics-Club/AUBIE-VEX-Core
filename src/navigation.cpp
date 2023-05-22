@@ -122,35 +122,14 @@ double TrackingBase<LE, RE, HE>::getBREnc() {
 }
 
 template <typename LE, typename RE, typename HE>
-TrackingBase<LE, RE, HE>::TrackingBase(LE *leftEncIn, bool leftReversed, RE *rightEncIn,
-                            bool rightReversed, vex::inertial *inertialSensorin,
-                            HE *horEncIn,bool horReversed) {
+TrackingBase<LE, RE, HE>::TrackingBase(LE *leftEncIn, bool leftReversed, RE *rightEncIn, bool rightReversed, 
+                            double encoderWidth, vex::inertial *inertialSensorin, HE *horEncIn, bool horReversed) {
   left = leftEncIn;
   right = rightEncIn;
   hor = horEncIn;
   inertialSensor = inertialSensorin;
-  if (leftReversed) {
-    leftK = -1;
-  }
-  if (rightReversed) {
-    rightReversed = -1;
-  }
-  if (horReversed) {
-    horReversed = -1;
-  }
-  
-  if(right != NULL && left != NULL){
-    baseDesign = 0;
-  }
-}
-
-template <typename LE, typename RE, typename HE>
-TrackingBase<LE, RE, HE>::TrackingBase(LE *leftEncIn, bool leftReversed, RE *rightEncIn,
-                            bool rightReversed, double encoderWidth, HE *horEncIn, bool horReversed) {
-  left = leftEncIn;
-  right = rightEncIn;
-  hor = horEncIn;
   width = encoderWidth;
+
   if (leftReversed) {
     leftK = -1;
   }
@@ -163,17 +142,22 @@ TrackingBase<LE, RE, HE>::TrackingBase(LE *leftEncIn, bool leftReversed, RE *rig
   
   if(right != NULL && left != NULL){
     baseDesign = 0;
+  }
+
+  if(horEncIn != NULL){
+    hasHor = true;
   }
 }
 
 template <typename LE, typename RE, typename HE>
 TrackingBase<LE, RE, HE>::TrackingBase(vex::motor *frontRight, vex::motor *frontLeft,
-                            vex::motor *backRight, vex::motor *backLeft, vex::inertial *inertialSensorin) {
-  vex::motor *mFR = frontRight;
-  vex::motor *mFL = frontLeft;
-  vex::motor *mBR = backRight;
-  vex::motor *mBL = backLeft;
+                            vex::motor *backRight, vex::motor *backLeft, double encoderWidth, vex::inertial *inertialSensorin) {
+  mFR = frontRight;
+  mFL = frontLeft;
+  mBR = backRight;
+  mBL = backLeft;
   inertialSensor = inertialSensorin;
+  width = encoderWidth;
   
   if(mFR != NULL && mFL != NULL && mBR != NULL && mBL != NULL){
     baseDesign = 1;
@@ -193,7 +177,27 @@ template <typename LE, typename RE, typename HE>
 void TrackingBase<LE, RE, HE>::setHorCoefficent(double k) { horK = sign(horK) * k; }
 
 template <typename LE, typename RE, typename HE>
+void TrackingBase<LE, RE, HE>::setHeading(double newHead, bool inDeg) { 
+  newHead = normalizeAngle(newHead, !inDeg);
+
+  if(inDeg){
+    if(inertialSensor != NULL){
+      inertialSensor->setRotation(360 - newHead, vex::rotationUnits::deg);
+    }
+
+    newHead = degToRad(newHead);
+  } else {
+    if(inertialSensor != NULL){
+      inertialSensor->setRotation(360 - radToDeg(newHead), vex::rotationUnits::deg);
+    }
+  }
+
+  head = newHead;
+}
+
+template <typename LE, typename RE, typename HE>
 void TrackingBase<LE, RE, HE>::resetAll() {
+  //Resets encoders and prevEncoders
   resetRightEnc();
   resetLeftEnc();
   resetHorEnc();
@@ -204,51 +208,78 @@ void TrackingBase<LE, RE, HE>::resetAll() {
   resetFREnc();
 }
 
-// Returns heading from inertial sensor or wheels if inertial failed or non present
 template <typename LE, typename RE, typename HE>
-double TrackingBase<LE, RE, HE>::getHeading() {
-  if(inertialSensor != NULL){
-    if(inertialSensor->installed()){
-      if(!inertialSensor->isCalibrating()){
-        //Inertial OK
-        double head = inertialSensor->angle(); //Gets unbounded angle; Positive in CW direction
-        head = 360 - normalizeAngle(head, false); //Heading in CCW + direction
-        return head;
-      }
+void TrackingBase<LE, RE, HE>::update() {
+  static bool notLoggedFailure = true;
+  if(inertialSensor != NULL && inertialSensor->installed()){
+      //Inertial OK
+      double headTemp = inertialSensor->angle(); //Gets unbounded angle; Positive in CW direction
+      headTemp = 360 - normalizeAngle(headTemp, false); //Heading in CCW + direction
+      notLoggedFailure = true;
+      head = degToRad(headTemp);
+  } else {
+    //No Inertial
+    if(notLoggedFailure){
+      coreLogger.error("INERTIAL FAILURE", "TRACKINGBASE");
+      notLoggedFailure = false;
     }
-  }
-  //No Inertial
-  if(baseDesign == 0){
-    //Tank
 
+    if(baseDesign == 0){
+      head += ((getRightEnc() - rightEncPrev) - (getLeftEnc() - leftEncPrev)) / width;
+    }else if(baseDesign == 1){
+      double a = (getFREnc() - mFRPrev) - (getBLEnc() - mBLPrev);
+      a += (getBREnc() - mBRPrev) - (getFLEnc() - mFLPrev);
+      head += a / (2 * width); //Average and divide by 2r (2r=width) to get angular turn
+    }
+
+  }
+
+  if(baseDesign == 0){
+    double deltaForward = 0;
+    double deltaHorizontal = 0;
+
+    //Tank
+    double left = getLeftEnc();
+    double right = getRightEnc();
+    deltaForward = 0.5 * (left - leftEncPrev + right - rightEncPrev);
+    leftEncPrev = left;
+    rightEncPrev = right;
+
+    left = getHorEnc(); //Reuse left to save memory
+    deltaHorizontal = left - horEncPrev;
+    horEncPrev = left;
+
+    realitiveVector = Vector2d(deltaForward, deltaHorizontal);
   }else if(baseDesign == 1){
     //X Drive
 
+    double A =  0.5*(getFREnc() - mFRPrev + getBLEnc() - mBLPrev);
+    double B =  0.5*(getBREnc() - mBRPrev + getFLEnc() - mFLPrev);
+
+    mFRPrev = getFREnc();
+    mFLPrev = getFLEnc();
+    mBRPrev = getBREnc();
+    mBLPrev = getBLEnc();
+
+    realitiveVector = Vector2d(A, 135, true) + Vector2d(B, 45, true);
   }
+}
+
+
+// Returns heading from inertial sensor or wheels if inertial failed or non present
+template <typename LE, typename RE, typename HE>
+double TrackingBase<LE, RE, HE>::getHeading() {
+  return head;
 }
 
 // Returns a vector from the robot's frame of reference
 template <typename LE, typename RE, typename HE>
 Vector2d TrackingBase<LE, RE, HE>::getRelVector() {
-  double deltaForward = 0;
-  if(baseDesign == 0){
-    //Tank
-
-  }else if(baseDesign == 1){
-    //X Drive
-    
-  }
-
-  double deltaHorizontal = 0;
-  if(hor != NULL){
-    deltaHorizontal = getHorEnc();
-  }
-  return Vector2d(deltaForward, deltaHorizontal);
+  return realitiveVector;
 }
 
 // Returns a vector from the field's frame of reference
 template <typename LE, typename RE, typename HE>
 Vector2d TrackingBase<LE, RE, HE>::getAbsVector() {
-  // TODO getRelVector * heading;
-  //TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  return Vector2d(realitiveVector.getMagnitude(), getHeading(), false);
 }

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ROBOT_NAV_H
+#define ROBOT_NAV_H
 
 #include "AUBIE-VEX-CORE/robotmath.h"
 #include "AUBIE-VEX-CORE/logger.h"
@@ -16,7 +17,8 @@ class TrackingBase {
   private:
   //-1 for invalid, 0 for tank/encoders, 1 for X
   int baseDesign = -1;
-
+  bool hasHor = false;
+  
   void* left = NULL;
   void* right = NULL;
   void* hor = NULL;
@@ -32,6 +34,9 @@ class TrackingBase {
   double leftK = 1;
   double rightK = 1;
   double horK = 1;
+
+  Vector2d realitiveVector = Vector2d(0, 0);
+  double head = 0;
 
   double horEncPrev = 0;
   double leftEncPrev = 0;
@@ -67,13 +72,12 @@ class TrackingBase {
 
 public:
   //Encoder/Tank Constructor w/ Inertial
-  TrackingBase(LE* leftEncIn, bool leftReversed, RE* rightEncIn, bool rightReversed, vex::inertial* inertialSensorin, HE* horEncIn=NULL, bool horReversed = false);
-
-  //Encoder/Tank Constructor wo/ Inertial
-  TrackingBase(LE* leftEncIn, bool leftReversed, RE* rightEncIn, bool rightReversed, double encoderWidth, HE* horEncIn=NULL, bool horReversed = false);
+  TrackingBase(LE* leftEncIn, bool leftReversed, RE* rightEncIn, bool rightReversed, double encoderWidth, 
+                vex::inertial* inertialSensorin = NULL, HE* horEncIn=NULL, bool horReversed = false);
 
   //X Drive Constructor
-  TrackingBase(vex::motor* frontRight, vex::motor* frontLeft, vex::motor* backRight, vex::motor* backLeft, vex::inertial* inertialSensorin = NULL);
+  TrackingBase(vex::motor* frontRight, vex::motor* frontLeft, vex::motor* backRight, vex::motor* backLeft, double encoderWidth, 
+                vex::inertial* inertialSensorin = NULL);
 
   //Set Coefficents
   void setGlobalCoefficent(double k);
@@ -83,8 +87,14 @@ public:
   //Sets horizontal tracking wheel coefficent
   void setHorCoefficent(double k);
 
-  //Resets all encoders
+  //Sets heading
+  void setHeading(double newHead, bool inDeg = true);
+
+  //Resets all encoders - Recommended only use during tracking setup
   void resetAll();
+
+  //Updates heading and positionDeltas
+  void update();
 
   //Returns heading from inertial sensor or wheels if inertial failed or non present
   double getHeading();
@@ -121,8 +131,16 @@ public:
   //Extrapolate from points
 };
 
+typedef struct{
+  Point2d currentPosition;
+  double currentHeading;
+  bool currentHeadingInDeg;
+}startingPosition;
+
 class Navigator{
   //
 };
 
 Navigator navigation;
+
+#endif

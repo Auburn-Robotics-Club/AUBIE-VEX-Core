@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ROBOT_LOGGER_H
+#define ROBOT_LOGGER_H
 
 /*
 Name: logger.h
@@ -82,4 +83,6 @@ public:
   void error(std::string label, std::string data);
 };
 
-Log coreLogger();
+extern Log coreLogger;
+
+#endif
