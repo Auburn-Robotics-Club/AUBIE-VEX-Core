@@ -187,6 +187,11 @@ double BasePIDController::update(double currentValue, double deltaTime){
 
 //Point2d
 //--------------------------------------------------------------------------------------------------
+Point2d::Point2d() {
+    x = 0;
+    y = 0;
+}
+
 Point2d::Point2d(double X, double Y) {
   x = X;
   y = Y;
@@ -208,6 +213,11 @@ std::ostream& operator << (std::ostream& os, Point2d p){
 //Vector2d
 //--------------------------------------------------------------------------------------------------
 
+// Define Vector
+Vector2d::Vector2d() {
+    deltaX = 1;
+    deltaY = 1;
+}
 // Define Vector by using dX and dY
 Vector2d::Vector2d(double delta_x, double delta_y) {
   deltaX = delta_x;
@@ -239,6 +249,12 @@ double Vector2d::getMagnitude() {
 double Vector2d::dot(Vector2d otherV) {
   return deltaX * otherV.deltaX + deltaY * otherV.deltaY;
 }
+
+// Returns the cross product of this vector and another
+double Vector2d::cross(Vector2d otherV) {
+    return deltaX * otherV.deltaY - deltaY * otherV.deltaX;
+}
+
 // Returns the angle between this vector and another realitive to this vector in radians (+ is CCW; - is CW)
 double Vector2d::getAngle(Vector2d vecB) {
   if ((getMagnitude() == 0) || (vecB.getMagnitude() == 0)) {

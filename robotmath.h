@@ -127,6 +127,7 @@ class Point2d{
   public:
     double x;
     double y;
+    Point2d();
     Point2d(double X, double Y);
 };
 
@@ -140,6 +141,9 @@ class Vector2d{
     double deltaY; //Change in Y repersented of the vector
     
   public:
+    //Define Vector
+    Vector2d();
+
     //Define Vector by using dX and dY
     Vector2d(double delta_x, double delta_y);
     
@@ -160,6 +164,9 @@ class Vector2d{
 
     //Returns the dot product of this vector and another (The product of both vector's magnitude, + if in same direction, 0 if perendicular, - if facing opposite directions)
     double dot(Vector2d otherV);
+
+    //Returns the cross product of this vector and another
+    double cross(Vector2d otherV);
 
     //Returns the angle between this vector and another realitive to this vector in radians (+ is CCW; - is CW)
     double getAngle(Vector2d vecB);
