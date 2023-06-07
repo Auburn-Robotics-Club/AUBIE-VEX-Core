@@ -1,3 +1,3 @@
-#include "AUBIE-VEX-CORE/navigation.h"
+#include "../navigation.h"
 
 Navigator navigation;

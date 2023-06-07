@@ -1,6 +1,7 @@
 #ifndef ROBOT_MATH_H
 #define ROBOT_MATH_H
 
+#define _USE_MATH_DEFINES
 #include "math.h"
 #include <algorithm>
 #include <vector>
@@ -19,35 +20,9 @@ Defines abstract mathmatical concepts and algorithms relevent to robot control. 
 const double M_2PI = 2*M_PI;
 const double M_PI_180 = M_PI/180;
 const double M_180_PI = 180/M_PI;
+const double MAXIMUM_DOUBLE_DIFFERENCE_FOR_EQUALS_SENSORDATA = 0.001; //0.5 deg in radians = 0.008 thus 0.001 should be accurate enough given sensor capability
 
-//Misc Functions
-//--------------------------------------------------------------------------------------------------
-
-//Returns x if within min/max else return min/max
-int clamp(int x, int min, int max);
-double fclamp(double x, double min, double max);
-
-//sign - returns 1 if input >= 0; -1 if input < 0
-int sign(int x);
-double sign(double x);
-
-//Angles
-
-//Converts degrees to radians
-double degToRad(double degrees);
-//Converts radians to degrees
-double radToDeg(double radians);
-
-//Returns any angle between 0 - (360 || 2PI depending if input in in degrees or radians)
-double normalizeAngle(double theta, bool inRadians=true);
-
-
-//Takes two headings and gives you the smallest angle between them in radians; + if the target heading is counter clockwise of the current heading and - if clockwise
-double shortestArcToTarget(double currentHeading, double targetHeading, bool inDeg=false);
-
-//Takes two headings and returns the shortest angle between the current heading and a secent line through the circle that passes through the target heading
-double shortestArcToLine(double currentHeading, double targetHeading, bool inDeg=false);
-
+//Filters
 //--------------------------------------------------------------------------------------------------
 
 //Moving median filter - Less suseptiable to shocks
@@ -131,7 +106,22 @@ class Point2d{
     Point2d(double X, double Y);
 };
 
+//Print operation (x, y)
 std::ostream& operator << (std::ostream& os, Point2d p);
+
+//Returns midpoint
+Point2d midpoint(Point2d a, Point2d b);
+
+//positionSet
+//--------------------------------------------------------------------------------------------------
+typedef struct {
+    Point2d p; //Units
+    double head; //Radians
+} positionSet;
+
+std::ostream& operator << (std::ostream& os, positionSet p);
+bool operator==(const positionSet& a, const positionSet& b);
+bool operator!=(const positionSet& a, const positionSet& b);
 
 //Vector2d
 //--------------------------------------------------------------------------------------------------
@@ -201,5 +191,93 @@ class Vector2d{
 };
 
 std::ostream& operator << (std::ostream& os, Vector2d v);
+
+//Misc Functions
+//--------------------------------------------------------------------------------------------------
+
+//Returns x if within min/max else return min/max
+int clamp(int x, int min, int max);
+double fclamp(double x, double min, double max);
+
+//sign - returns 1 if input >= 0; -1 if input < 0
+int sign(int x);
+double sign(double x);
+
+//Angles
+
+//Converts degrees to radians
+double degToRad(double degrees);
+//Converts radians to degrees
+double radToDeg(double radians);
+
+//Returns any angle between 0 - (360 || 2PI depending if input in in degrees or radians)
+double normalizeAngle(double theta, bool inRadians = true);
+
+
+//Takes two headings and gives you the smallest angle between them in radians; + if the target heading is counter clockwise of the current heading and - if clockwise
+double shortestArcToTarget(double currentHeading, double targetHeading, bool inDeg = false);
+
+//Takes two headings and returns the shortest angle between the current heading and a secent line through the circle that passes through the target heading
+double shortestArcToLine(double currentHeading, double targetHeading, bool inDeg = false);
+
+//Returns a point along a defined bezier curve at t (0-1)
+Point2d bezierFormula(Point2d initPoint, Point2d finalPoint, Point2d C1, double t);
+
+//Bezier Path using control points
+//Recommended to use pass by reference functions rather than returns to save memory
+std::vector<Point2d> generateCurve(Point2d start, Point2d end, Point2d c1, bool includeC1 = false, int steps = 10);
+std::vector<Point2d> generateCurve(Point2d start, Vector2d end, Vector2d v1, bool includeC1 = false, int steps = 10);
+void generateCurve(std::vector<Point2d>& points, Point2d start, Point2d end, Point2d c1, bool includeC1 = false, int steps = 10);
+void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, Vector2d v1, bool includeC1 = false, int steps = 10);
+
+std::vector<Point2d> generateCurve(Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1 = false, int steps = 10);
+std::vector<Point2d> generateCurve(Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1 = false, int steps = 10);
+void generateCurve(std::vector<Point2d>& points, Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1 = false, int steps = 10);
+void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1 = false, int steps = 10);
+
+std::vector<positionSet> curveHeadings(std::vector<Point2d>& points);
+void curveHeadings(std::vector<positionSet>& posSet, std::vector<Point2d>& points);
+
+positionSet predictLinear(positionSet start, Vector2d vel, double w, double t);
+//Tank drive assumed
+positionSet predictWithConstantTurning(positionSet start, Vector2d vel, double w, double t);
+
+//Path
+//--------------------------------------------------------------------------------------------------
+class Path {
+protected:
+    int internalIndex = 0;
+    std::vector<positionSet> points;
+
+public:
+    Path();
+    Path(std::vector<positionSet>& pointsIn);
+
+    std::vector<positionSet>& getList();
+    void setIndex(int i = 0);
+    int size();
+    positionSet next();
+    bool hasNext();
+    int index();
+    positionSet get(int i);
+    void dropFront(); //Delete upto and including current index then set index to 0
+    void clear();
+
+    void addPointset(positionSet Point);
+    void addPointset(Point2d p, double head, bool inDeg = true);
+
+    double arclength(int start = 0, int end = -1);
+    double arclengthFromIndexTo(int end = -1);
+
+    void subpath(Path& pathIn, int start, int end);
+    Path subpath(int start, int end);
+
+    //Append
+    positionSet operator [] (int index);
+    Path& operator + (positionSet& p);
+    Path& operator + (Path& p);
+};
+
+std::ostream& operator << (std::ostream& os, Path p);
 
 #endif

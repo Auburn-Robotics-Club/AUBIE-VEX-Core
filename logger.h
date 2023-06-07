@@ -8,7 +8,7 @@ Written By: Carson Easterling
 
 #include <iostream>
 #include <sstream>
-#include "AUBIE-VEX-CORE/robotmath.h"
+#include "robotmath.h"
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,17 +26,6 @@ const int PID_DATA = 6;
 const int INFO = 7;
 const int WARNING = 8;
 const int ERROR = 9;
-
-//positionSet
-//--------------------------------------------------------------------------------------------------
-typedef struct {
-  Point2d p; //Units
-  double head; //Radians
-} positionSet;
-
-std::ostream& operator << (std::ostream& os, positionSet p);
-bool operator==(const positionSet& a, const positionSet& b);
-bool operator!=(const positionSet& a, const positionSet& b);
 
 //Log
 //coreLogger is implementation across libary

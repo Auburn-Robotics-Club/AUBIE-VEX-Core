@@ -1,25 +1,6 @@
-#include "AUBIE-VEX-CORE/logger.h"
+#include "../logger.h"
 
 Log coreLogger = Log();
-
-//positionSet
-//--------------------------------------------------------------------------------------------------
-std::ostream& operator << (std::ostream& os, positionSet p){
-  os << "(" << p.p.x << ", " << p.p.y << ", " << p.head << ")";
-  return os;
-}
-
-bool operator==(const positionSet& a, const positionSet& b){
-  if((fabs(a.p.x - b.p.x) < 0.0001) && (fabs(a.p.y - b.p.y) < 0.0001) && (fabs(a.head - b.head) < 0.0001)){
-    return true;
-  }else{
-    return false;
-  }
-}
-
-bool operator!=(const positionSet& a, const positionSet& b){
-  return !(a == b);
-}
 
 //Log
 //--------------------------------------------------------------------------------------------------

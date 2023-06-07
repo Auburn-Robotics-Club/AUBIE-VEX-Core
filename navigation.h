@@ -1,10 +1,10 @@
 #ifndef ROBOT_NAV_H
 #define ROBOT_NAV_H
 
-#include "AUBIE-VEX-CORE/robotmath.h"
-#include "AUBIE-VEX-CORE/logger.h"
-#include "v5.h"
-#include "v5_vcs.h"
+#include "robotmath.h"
+#include "logger.h"
+#include "../v5.h"
+#include "../v5_vcs.h"
 
 // Look into these functions found in v5_api.h
   //vexDeviceGetByIndex(0);
@@ -150,22 +150,22 @@ class TrackingBase {
 
 public:
     //Encoder/Tank Constructor w/ Inertial
-    TrackingBase(LE* leftEncIn, bool leftReversed, RE* rightEncIn, bool rightReversed,
-        double encoderWidth, vex::inertial* inertialSensorin = NULL, HE* horEncIn = NULL, bool horReversed = false) {
+    TrackingBase(LE* leftEncIn, bool isLeftReversed, RE* rightEncIn, bool isRightReversed,
+        double encoderWidth, vex::inertial* inertialSensorin = NULL, HE* horEncIn = NULL, bool isHorReversed = false) {
         left = leftEncIn;
         right = rightEncIn;
         hor = horEncIn;
         inertialSensor = inertialSensorin;
         width = encoderWidth;
 
-        if (leftReversed) {
+        if (isLeftReversed) {
             leftK = -1;
         }
-        if (rightReversed) {
-            rightReversed = -1;
+        if (isRightReversed) {
+            rightK = -1;
         }
-        if (horReversed) {
-            horReversed = -1;
+        if (isHorReversed) {
+            horK = -1;
         }
 
         if (right != NULL && left != NULL) {
@@ -307,31 +307,6 @@ public:
   Vector2d getAbsVector() {      
       return realitiveVector.getRotatedVector(getHeading() - M_PI_2);
   }
-};
-
-class Path{
-protected:
-  int index = 0;
-  std::vector<positionSet> points;
-
-public:
-  const std::vector<positionSet> * const getList();
-  void setIndex(size_t newIndex=0); //If index > list.size set to list.size
-  int size();
-  bool hasNext();
-  positionSet get();
-  void drop(); //Delete upto and including current index then set index to 0
-
-  void addPointset(positionSet Point);
-  
-  //For target:
-  //Arclength for total and remaining path, generate points, read from file, event points, nextPoint
-  //Given set of points interpolate
-  
-  //Smarter navigation
-  //Store last couple points to measure derivitives
-  //Predicitive motion
-  //Extrapolate from points
 };
 
 typedef struct{
