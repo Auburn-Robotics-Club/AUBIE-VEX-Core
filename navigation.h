@@ -3,8 +3,8 @@
 
 #include "robotmath.h"
 #include "logger.h"
-#include "../v5.h"
-#include "../v5_vcs.h"
+#include "v5.h"
+#include "v5_vcs.h"
 
 // Look into these functions found in v5_api.h
   //vexDeviceGetByIndex(0);
