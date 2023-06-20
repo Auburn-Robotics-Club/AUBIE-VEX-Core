@@ -115,6 +115,56 @@ Point2d midpoint(Point2d a, Point2d b) {
     return Point2d((a.x + b.x) * 0.5, (a.y + b.y) * 0.5);
 }
 
+Point2d operator + (Point2d p, Vector2d v) {
+    return v + p;
+};
+
+std::vector<Point2d> operator + (const std::vector<Point2d>& pList, const std::vector<Vector2d>& vList) {
+    std::vector<Point2d> result;
+    if (pList.size() >= vList.size()) {
+        for (int i = 0; i < vList.size(); i++) {
+            result.push_back(pList[i] + vList[i]);
+        }
+    } else {
+        for (int i = 0; i < pList.size(); i++) {
+            result.push_back(pList[i] + vList[i]);
+        }
+    }
+    return result;
+};
+
+std::vector<Point2d> operator + (const std::vector<Vector2d>& vList, const std::vector<Point2d>& pList) {
+    return pList + vList;
+};
+
+std::vector<Point2d> operator + (const std::vector<Point2d>& pList, Vector2d v) {
+    std::vector<Point2d> result;
+    for (int i = 0; i < pList.size(); i++) {
+        result.push_back(pList[i] + v);
+    }
+    return result;
+};
+
+std::vector<Point2d> operator * (const std::vector<Point2d>& pList, double scale) {
+    std::vector<Point2d> result;
+    for (int i = 1; i < pList.size(); i++) {
+        result.push_back(pList[0] + (Vector2d(pList[0], pList[i]).scale(scale)));
+    }
+    return result;
+};
+
+std::vector<Point2d> operator || (const std::vector<Point2d>& pList, double radiansCCW) {
+    std::vector<Point2d> result;
+    if (pList.size() > 0) {
+        result.push_back(pList[0]);
+        for (int i = 1; i < pList.size(); i++) {
+            result.push_back(pList[0] + (Vector2d(pList[0], pList[i]).getRotatedVector(radiansCCW)));
+        }
+    }
+    return result;
+};
+
+
 //positionSet
 //--------------------------------------------------------------------------------------------------
 std::ostream& operator << (std::ostream& os, positionSet p) {
@@ -250,6 +300,21 @@ Vector2d Vector2d::operator*(double scalar) {
   return Vector2d(deltaX * scalar, deltaY * scalar);
 }
 
+//Dot Product
+double Vector2d::operator * (Vector2d v) {
+    return dot(v);
+};
+
+//Cross Product
+double Vector2d::operator || (Vector2d v) {
+    return cross(v);
+};
+
+//Rotate
+Vector2d Vector2d::operator|| (double radiansCCW) {
+    return getRotatedVector(radiansCCW);
+};
+
 Point2d Vector2d::operator+(Point2d& p) {
     return Point2d(p.x + getX(), p.y + getY());
 }
@@ -262,6 +327,31 @@ std::ostream& operator << (std::ostream& os, Vector2d v){
   os << "<" << v.getX() << ", " << v.getY() << ">";
   return os;
 }
+
+std::vector<Vector2d> operator + (std::vector<Vector2d>& vList, Vector2d v) {
+    std::vector<Vector2d> result;
+    for (int i = 0; i < vList.size(); i++) {
+        result.push_back(vList[i] + v);
+    }
+    return result;
+};
+
+std::vector<Vector2d> operator * (std::vector<Vector2d>& vList, double scale) {
+    std::vector<Vector2d> result;
+    for (int i = 0; i < vList.size(); i++) {
+        result.push_back(vList[i].scale(scale));
+    }
+    return result;
+};
+
+std::vector<Vector2d> operator || (std::vector<Vector2d>& vList, double radiansCCW) {
+    std::vector<Vector2d> result;
+    for (int i = 0; i < vList.size(); i++) {
+        result.push_back(vList[i].getRotatedVector(radiansCCW));
+    }
+    return result;
+};
+
 
 //Misc Functions
 //--------------------------------------------------------------------------------------------------

@@ -98,6 +98,9 @@ public:
 
 //Point2d
 //--------------------------------------------------------------------------------------------------
+class Vector2d;
+class Point2d;
+
 class Point2d{
   public:
     double x;
@@ -111,6 +114,15 @@ std::ostream& operator << (std::ostream& os, Point2d p);
 
 //Returns midpoint
 Point2d midpoint(Point2d a, Point2d b);
+
+Point2d operator + (Point2d p, Vector2d v);
+std::vector<Point2d> operator + (const std::vector<Point2d>& pList, const std::vector<Vector2d>& vList);
+std::vector<Point2d> operator + (const std::vector<Vector2d>& vList, const std::vector<Point2d>& pList);
+
+std::vector<Point2d> operator + (const std::vector<Point2d>& pList, Vector2d v); //Offset each element in a list
+std::vector<Point2d> operator * (const std::vector<Point2d>& pList, double scale); //Scale each element in a list realitive to first point
+std::vector<Point2d> operator || (const std::vector<Point2d>& pList, double radiansCCW); //Rotate each element in list realitive to first point
+
 
 //positionSet
 //--------------------------------------------------------------------------------------------------
@@ -185,12 +197,24 @@ class Vector2d{
     //Returns a new vector scaled by factor (this * constDouble)
     Vector2d operator * (double scalar);
 
+    //Dot Product
+    double operator * (Vector2d v);
+
+    //Cross Product
+    double operator || (Vector2d v);
+
+    //Rotate
+    Vector2d operator || (double radiansCCW);
+
     //Returns a new point that results from adding a vector from a point (this + point)
     Point2d operator + (Point2d &p);
     Point2d operator - (Point2d &p);
 };
 
 std::ostream& operator << (std::ostream& os, Vector2d v);
+std::vector<Vector2d> operator + (std::vector<Vector2d>& vList, Vector2d v); //Offset each element in a list
+std::vector<Vector2d> operator * (std::vector<Vector2d>& vList, double scale); //Scale each element in a list
+std::vector<Vector2d> operator || (std::vector<Vector2d>& vList, double radiansCCW); //Rotate each element in list
 
 //Misc Functions
 //--------------------------------------------------------------------------------------------------
