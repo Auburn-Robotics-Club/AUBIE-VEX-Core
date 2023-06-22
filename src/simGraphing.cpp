@@ -1,5 +1,9 @@
 #include "simGraphing.h"
 
+void plot(simulator::FieldGraph& graph, Point2d p, sf::Color color) {
+	graph.plot(p.x, p.y, color);
+}
+
 void scatter(simulator::FieldGraph& graph, Point2d p, sf::Color color) {
 	graph.scatter(p.x, p.y, color);
 };

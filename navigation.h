@@ -295,7 +295,7 @@ public:
 
   //Returns heading from inertial sensor or wheels if inertial failed or non present
   double getHeading() {
-      return normalizeAngle(head);
+      return head;
   }
   
   //Returns a vector from the robot's frame of reference
@@ -309,6 +309,19 @@ public:
   }
 };
 
+//Events
+//--------------------------------------------------------------------------------------------------
+class NavigationEvent {
+    //Holds details about
+};
+
+class EventManager {
+    //Handles events, sorts into list based on positon, binary search/metadata memory search to find closest events to call, removes events when they should no longer be called, remembers order to call events,
+    //thread safe
+};
+
+//Navigator
+//--------------------------------------------------------------------------------------------------
 typedef struct{
   Point2d currentPosition;
   double currentHeading;
@@ -316,7 +329,166 @@ typedef struct{
 }startingPosition;
 
 class Navigator{
-  //
+private:
+    const double STOP_TIME = 0.2;
+    double linearStopRadius = 1;
+    double angularStopRadius = degToRad(1);
+    
+    double linearStopTimer = STOP_TIME;
+    double rotationalStopTimer = STOP_TIME;
+
+    bool linearStopped = true;
+    bool rotationalStopped = true;
+
+    positionSet currentPos = { Point2d(0, 0), 0 };
+    positionSet previousPos = { Point2d(0, 0), 0 }; //Used only for velocity calculations in update()
+    positionSet lastStoppedPos = { Point2d(0, 0), 0 };
+
+    Vector2d velocity = Vector2d(0, 0);
+    Vector2d acceleration = Vector2d(0, 0);
+    double angularVelocity = 0;
+    double angularAcceleration = 0;
+
+    Path targetPath; //TODO
+
+    void updateStopTime(double deltaTime) {
+        //Linear
+        if (getVelocity().getMagnitude() * STOP_TIME < linearStopRadius) {
+            if (linearStopTimer < STOP_TIME) {
+                linearStopTimer += deltaTime;
+            }
+            else {
+                lastStoppedPos.p = currentPos.p;
+                linearStopped = true;
+            }
+        }
+        else {
+            linearStopped = false;
+            linearStopTimer = 0;
+        }
+
+        //Rotation
+        if (abs(getAngularVelocity()) * STOP_TIME < angularStopRadius) {
+            if (rotationalStopTimer < STOP_TIME) {
+                rotationalStopTimer += deltaTime;
+            }
+            else {
+                lastStoppedPos.head = currentPos.head;
+                rotationalStopped = true;
+            }
+        }
+        else {
+            rotationalStopped = false;
+            rotationalStopTimer = 0;
+        }
+    }
+
+public:
+    Navigator() {
+        //stopRadius needs to be init
+        //Starting pos needs to be init
+    }
+
+    //Set starting Position
+    void setStartingPos(Point2d currentPosition, double currentHeading, bool currentHeadingInDeg) {
+        setCurrentPosition(currentPosition);
+        setHead(currentHeading, currentHeadingInDeg);
+        previousPos = currentPos;
+        lastStoppedPos = currentPos;
+    }
+
+    void setStartingPos(startingPosition pos) {
+        setStartingPos(pos.currentPosition, pos.currentHeading, pos.currentHeadingInDeg);
+    }
+
+    //Current Position Setters
+    void setCurrentPosition(Point2d p) {
+        currentPos.p = p;
+    }
+
+    void shiftCurrentPosition(Vector2d shift) {
+        currentPos.p = currentPos.p + shift;
+    }
+
+    void setHead(double newHead, bool headingInDegrees) {
+        if (headingInDegrees) {
+            newHead = degToRad(newHead);
+        }
+        currentPos.head = newHead;
+    }
+
+    void shiftCurrentHead(double shift, bool headingInDegrees) {
+        if (headingInDegrees) { shift = degToRad(shift); }
+        currentPos.head = currentPos.head + shift;
+    }
+
+    //Update based on currentPosition and time
+    void updateNavigation(double deltaTime) {
+        double inverseDeltaTime = 1 / deltaTime;
+
+        Vector2d newVel = (currentPos.p - previousPos.p).scale(inverseDeltaTime);
+        acceleration = (newVel - velocity).scale(inverseDeltaTime);
+        velocity = newVel;
+
+        double newAngularVel = (currentPos.head - previousPos.head) * inverseDeltaTime; //ASSUMES NON-NORMLIZED HEADING
+        angularAcceleration = (newAngularVel - angularVelocity) * inverseDeltaTime;
+        angularVelocity = newAngularVel;
+
+        updateStopTime(deltaTime);
+
+        //TODO Target management, events, etc
+        //Hanndle Tagrte management, calculating arclength, curvature, nextTagrte, target vector, etc; Motion contoller decides when next tagret is, navigation just answers question about the path
+
+        previousPos = currentPos;
+    }
+
+    //Getters
+    positionSet getPosition() {
+        return currentPos;
+    }
+
+    positionSet getLastStoppedPos() {
+        return lastStoppedPos;
+    }
+
+    Vector2d getVelocity() {
+        return velocity;
+    }
+
+    Vector2d getAcceleration() {
+        return acceleration;
+    }
+
+    double getAngularVelocity() {
+        return angularVelocity;
+    }
+
+    double getAngularAcceleration() {
+        return angularAcceleration;
+    }
+
+    Vector2d getRobotNormalVector() {
+        return Vector2d(1, normalizeAngle(currentPos.head), false);
+    }
+
+    Vector2d translateGlobalToLocal(Vector2d v) {
+        return v.getRotatedVector(M_PI_2 - normalizeAngle(currentPos.head));
+    }
+    Vector2d translateLocalToGlobal(Vector2d v) {
+        return v.getRotatedVector(normalizeAngle(currentPos.head) - M_PI_2);
+    }
+
+    bool isLinearStopped() {
+        return linearStopped;
+    }
+
+    bool isRotationalStopped() {
+        return rotationalStopped;
+    }
+
+    const Path& getTargetList() {
+        return targetPath;
+    }
 };
 
 extern Navigator navigation;

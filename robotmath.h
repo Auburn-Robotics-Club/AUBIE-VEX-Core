@@ -115,6 +115,7 @@ std::ostream& operator << (std::ostream& os, Point2d p);
 //Returns midpoint
 Point2d midpoint(Point2d a, Point2d b);
 
+Vector2d operator - (const Point2d endPoint, const Point2d startPoint);
 Point2d operator + (Point2d p, Vector2d v);
 std::vector<Point2d> operator + (const std::vector<Point2d>& pList, const std::vector<Vector2d>& vList);
 std::vector<Point2d> operator + (const std::vector<Vector2d>& vList, const std::vector<Point2d>& pList);

@@ -115,6 +115,10 @@ Point2d midpoint(Point2d a, Point2d b) {
     return Point2d((a.x + b.x) * 0.5, (a.y + b.y) * 0.5);
 }
 
+Vector2d operator - (const Point2d endPoint, const Point2d startPoint) {
+    return Vector2d(startPoint, endPoint);
+};
+
 Point2d operator + (Point2d p, Vector2d v) {
     return v + p;
 };
