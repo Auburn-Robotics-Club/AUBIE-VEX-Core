@@ -276,7 +276,7 @@ protected:
 
 public:
     Path();
-    Path(std::vector<positionSet>& pointsIn);
+    Path(std::vector<positionSet> &pointsIn);
 
     std::vector<positionSet>& getList();
     void setIndex(int i = 0);
@@ -285,7 +285,7 @@ public:
     bool hasNext();
     int index();
     positionSet get(int i);
-    void dropFront(); //Delete upto and including current index then set index to 0
+    void drop(int x);
     void clear();
 
     void addPointset(positionSet Point);
@@ -303,6 +303,6 @@ public:
     Path& operator + (Path& p);
 };
 
-std::ostream& operator << (std::ostream& os, Path p);
+std::ostream& operator << (std::ostream& os, Path& p);
 
 #endif

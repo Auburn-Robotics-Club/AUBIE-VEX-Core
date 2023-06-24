@@ -343,12 +343,15 @@ private:
     positionSet currentPos = { Point2d(0, 0), 0 };
     positionSet previousPos = { Point2d(0, 0), 0 }; //Used only for velocity calculations in update()
     positionSet lastStoppedPos = { Point2d(0, 0), 0 };
+    positionSet lastTarget = { Point2d(0, 0), 0 };
 
     Vector2d velocity = Vector2d(0, 0);
     Vector2d acceleration = Vector2d(0, 0);
     double angularVelocity = 0;
     double angularAcceleration = 0;
 
+    const int lastPointCap = 3;
+    Path previousPath; //TODO - Maybe add timing component incase loops become inconsistant?
     Path targetPath; //TODO
 
     void updateStopTime(double deltaTime) {
@@ -395,6 +398,7 @@ public:
         setHead(currentHeading, currentHeadingInDeg);
         previousPos = currentPos;
         lastStoppedPos = currentPos;
+        lastTarget = currentPos;
     }
 
     void setStartingPos(startingPosition pos) {
@@ -439,7 +443,56 @@ public:
         //TODO Target management, events, etc
         //Hanndle Tagrte management, calculating arclength, curvature, nextTagrte, target vector, etc; Motion contoller decides when next tagret is, navigation just answers question about the path
 
+        if (previousPath.size() >= lastPointCap) {
+            previousPath.drop(1);
+        }
+        previousPath.addPointset(currentPos);
         previousPos = currentPos;
+    }
+
+    void clearTargets() {
+        targetPath.clear();
+    }
+
+    void addTarget(double x, double y) {
+        Point2d p = Point2d(x, y);
+        lastTarget = { p, normalizeAngle(Vector2d(1, 0).getAngle(Vector2d(lastTarget.p, p))) };
+        targetPath.addPointset(lastTarget);
+    }
+
+    void addTarget(double heading, bool inDeg = true) {
+        if (inDeg) { heading = degToRad(heading); }
+        heading = normalizeAngle(heading);
+        lastTarget = { lastTarget.p, heading };
+        targetPath.addPointset(lastTarget);
+    }
+
+    void addTarget(double x, double y, double heading, bool inDeg = true) {
+        if (inDeg) { heading = degToRad(heading); }
+        lastTarget = { Point2d(x, y), heading };
+        targetPath.addPointset(lastTarget);
+    }
+
+    void addTarget(positionSet in, bool inDeg = true) {
+        if (inDeg) { in.head = degToRad(in.head); }
+        in.head = normalizeAngle(in.head);
+        lastTarget = in;
+        targetPath.addPointset(in);
+    }
+
+    void addTarget(Vector2d in) {
+        addTarget(in.getX(), in.getY());
+    }
+
+    void addRelTarget(Vector2d in) {
+        in = translateLocalToGlobal(in);
+        addTarget(in.getX(), in.getY());
+    }
+
+    void addRelTarget(double heading, bool inDeg = true) {
+        if (inDeg) { heading = degToRad(heading); }
+        lastTarget = { lastTarget.p, normalizeAngle(currentPos.head + heading) };
+        targetPath.addPointset(lastTarget);
     }
 
     //Getters
@@ -449,6 +502,14 @@ public:
 
     positionSet getLastStoppedPos() {
         return lastStoppedPos;
+    }
+
+    Path& getPreviousPath() {
+        return previousPath;
+    }
+
+    Path& getTargetPath() {
+        return targetPath;
     }
 
     Vector2d getVelocity() {
@@ -486,8 +547,11 @@ public:
         return rotationalStopped;
     }
 
-    const Path& getTargetList() {
-        return targetPath;
+    double currentRadiusOfCurvature(){
+        double v = getVelocity().getMagnitude();
+        double a = getVelocity().getUnitVector().cross(getAcceleration());
+        if (abs(a) < 0.0001) { return 0; }
+        return (v * v / a);
     }
 };
 

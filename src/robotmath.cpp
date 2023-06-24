@@ -657,7 +657,7 @@ Path::Path() {
     //STUB
 };
 
-Path::Path(std::vector<positionSet>& pointsIn) {
+Path::Path(std::vector<positionSet> &pointsIn) {
     for (int i = 0; i < pointsIn.size(); i++) {
         addPointset(pointsIn[i]);
     }
@@ -701,19 +701,34 @@ int Path::index() {
 };
 
 positionSet Path::get(int i) {
-    if (abs(i) >= size()) {
-        i = sign(i) * (size() - 1);
+    if (i >= 0) {
+        if (i < size()) {
+            return points[i];
+        }
+        else {
+            return points[size() - 1];
+        }
     }
-    if (i < 0) {
-        i = size() + i;
+    else {
+        if (abs(i) > size()) { 
+            return points[0];
+        } else {
+            return points[size() + i];
+        }
     }
-    return points[i];
 };
 
-void Path::dropFront() {
-    points.erase(points.begin(), points.begin() + internalIndex);
+void Path::drop(int x) {
+    if (x >= size()) {
+        clear();
+        return;
+    }
+
+    points.erase(points.begin(), points.begin() + x);
     points.shrink_to_fit();
-    internalIndex = 0;
+    if (internalIndex > 0) {
+        internalIndex -= x;
+    }
 };
 
 void Path::clear() {
@@ -793,8 +808,11 @@ Path& Path::operator + (Path& p) {
 
 std::ostream& operator << (std::ostream& os, Path& p) {
     os << "{";
-    for (int i = 0; i < p.size(); i++) {
+    for (int i = 0; i < p.size() - 1; i++) {
         os << p.get(i) << ", ";
+    }
+    if (p.size() > 0) {
+        os << p.get(-1);
     }
     os << "}";
     return os;
