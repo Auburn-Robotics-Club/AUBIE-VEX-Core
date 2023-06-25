@@ -651,6 +651,21 @@ positionSet predictWithConstantTurning(positionSet start, Vector2d vel, double w
     return { Point2d(x, y), start.head + w * t };
 };
 
+double calculateRadiusOfCurvature(Point2d start, Point2d middle, Point2d end) {
+    double a = Vector2d(start, middle).getMagnitude();
+    double b = Vector2d(middle, end).getMagnitude();
+    double c = Vector2d(start, end).getMagnitude();
+
+    double q = (a * a + b * b - c * c) / (2 * a * b);
+    if (q != 1) {
+        double R = c / (2 * sqrt(1 - q * q));
+        return R * sign(Vector2d(start, middle).getAngle(Vector2d(middle, end))); //+ if Circle is going CCW
+    }
+    else {
+        return 0;
+    }
+};
+
 //Path
 //--------------------------------------------------------------------------------------------------
 Path::Path() {

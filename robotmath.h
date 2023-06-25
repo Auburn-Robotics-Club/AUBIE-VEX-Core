@@ -267,6 +267,8 @@ positionSet predictLinear(positionSet start, Vector2d vel, double w, double t);
 //Tank drive assumed
 positionSet predictWithConstantTurning(positionSet start, Vector2d vel, double w, double t);
 
+double calculateRadiusOfCurvature(Point2d start, Point2d middle, Point2d end);
+
 //Path
 //--------------------------------------------------------------------------------------------------
 class Path {
