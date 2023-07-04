@@ -84,10 +84,10 @@ double BasePIDController::update(double currentValue, double deltaTime){
   double deltaError = error - lastError;
   lastError = error;
 
-  setValue = clamp(setValue + kI * error * deltaTime, minOutput, maxOutput);
+  setValue = clamp(setValue + k.I * error * deltaTime, minOutput, maxOutput);
   
   output = clamp(
-            (kP * error) + (setValue) + (kD * deltaError / deltaTime), 
+            (k.P * error) + (setValue) + (k.D * deltaError / deltaTime), 
             minOutput, maxOutput);
   return output;
 }
@@ -359,6 +359,30 @@ std::vector<Vector2d> operator || (std::vector<Vector2d>& vList, double radiansC
 
 //Misc Functions
 //--------------------------------------------------------------------------------------------------
+
+//Returns minimum number
+int min(int a, int b) {
+    if (a > b) { return b; }
+    return a;
+}
+
+double fmin(double a, double b) {
+    if (a > b) { return b; }
+    return a;
+}
+
+//Returns maximum number
+int max(int a, int b) {
+    if (a < b) { return b; }
+    return a;
+}
+
+double fmax(double a, double b) {
+    if (a < b) { return b; }
+    return a;
+}
+
+//Clamps output between min and max
 int clamp(int x, int min, int max) {
     if (x < min) { return min; }
     if (x > max) { return max; }
@@ -646,8 +670,8 @@ positionSet predictWithConstantTurning(positionSet start, Vector2d vel, double w
         return predictLinear(start, vel, 0, t);
     }
     double v = vel.getMagnitude();
-    double x = start.p.x + v * t * sin(w * t + start.head) / w + v * cos(w * t + start.head) / pow(w, 2);
-    double y = start.p.y - v * t * cos(w * t + start.head) / w + v * sin(w * t + start.head) / pow(w, 2);
+    double x = start.p.x + (v * t * sin(w * t + start.head) / w);// +(v * cos(w * t + start.head) / pow(w, 2));
+    double y = start.p.y - (v * t * cos(w * t + start.head) / w);// +(v * sin(w * t + start.head) / pow(w, 2));
     return { Point2d(x, y), start.head + w * t };
 };
 

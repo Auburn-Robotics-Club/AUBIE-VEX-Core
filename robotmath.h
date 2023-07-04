@@ -27,6 +27,7 @@ const double MAXIMUM_DOUBLE_DIFFERENCE_FOR_EQUALS_SENSORDATA = 0.001; //0.5 deg 
 
 //Moving median filter - Less suseptiable to shocks
 //Kalman filter
+//Time based PID controller
 //SloshPIDController - Limits change of output
 //BamBamController
 //For more reading: https://pidexplained.com/how-to-tune-a-pid-controller/
@@ -72,11 +73,15 @@ public:
 
 //BasePIDController
 //--------------------------------------------------------------------------------------------------
+struct PIDValues {
+    double P;
+    double I;
+    double D;
+};
+
 class BasePIDController{
-protected:
-  double kP;
-  double kI;
-  double kD;
+protected: 
+  PIDValues k;
 
   double target;
   double error;
@@ -91,6 +96,7 @@ protected:
 
   double output;
 public:
+  //TODO INITALIZE PID VALUES
   void setTarget(double targetValue, double initSetValue=0);
   double update(double currentValue, double deltaTime);
 };
@@ -219,6 +225,14 @@ std::vector<Vector2d> operator || (std::vector<Vector2d>& vList, double radiansC
 
 //Misc Functions
 //--------------------------------------------------------------------------------------------------
+
+//Returns minimum number
+int min(int a, int b);
+double fmin(double a, double b);
+
+//Returns maximum number
+int max(int a, int b);
+double fmax(double a, double b);
 
 //Returns x if within min/max else return min/max
 int clamp(int x, int min, int max);

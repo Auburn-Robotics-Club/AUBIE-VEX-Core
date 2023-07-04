@@ -350,8 +350,8 @@ private:
     double angularVelocity = 0;
     double angularAcceleration = 0;
 
-    const int lastPointCap = 3;
-    Path previousPath; //TODO - Maybe add timing component incase loops become inconsistant?
+    int lastPointCap = 3;
+    Path previousPath; //TODO - Add timing component incase loops become inconsistant?
     Path targetPath; //TODO
 
     void updateStopTime(double deltaTime) {
@@ -426,6 +426,10 @@ public:
         currentPos.head = currentPos.head + shift;
     }
 
+    void setLastPointCap(int num) {
+        lastPointCap = max(3, num);
+    }
+
     //Update based on currentPosition and time
     void updateNavigation(double deltaTime) {
         double inverseDeltaTime = 1 / deltaTime;
@@ -452,6 +456,10 @@ public:
 
     void clearTargets() {
         targetPath.clear();
+    }
+
+    void shiftTarget() {
+        targetPath.next();
     }
 
     void addTarget(double x, double y) {
@@ -502,6 +510,18 @@ public:
 
     positionSet getLastStoppedPos() {
         return lastStoppedPos;
+    }
+
+    int getTargetIndex() {
+        return targetPath.index();
+    }
+
+    positionSet getTarget() {
+        return targetPath[getTargetIndex()];
+    }
+
+    positionSet getNextTarget() {
+        return targetPath[getTargetIndex() + 1];
     }
 
     Path& getPreviousPath() {
