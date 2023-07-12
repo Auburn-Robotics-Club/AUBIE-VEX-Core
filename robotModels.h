@@ -13,26 +13,7 @@ Written By: Carson Easterling
 #include "v5.h"
 #include "v5_vcs.h"
 
-void setM(vex::motor m, double speed, vex::velocityUnits uni = vex::velocityUnits::pct) {
-    m.setVelocity(speed, uni);
-    if (speed == 0) {
-        m.stop();
-    }
-    else {
-        m.spin(vex::directionType::fwd);
-    }
-}
-
-void setSide(vex::motor_group m, double speed, vex::velocityUnits uni = vex::velocityUnits::pct) {
-    m.setVelocity(speed, uni);
-    if (speed == 0) {
-        m.stop();
-    }
-    else {
-        m.spin(vex::directionType::fwd);
-    }
-}
-
+//Commands a velocity based on pos
 class MotionController {
 protected:
     Vector2d realtiveTargetVel = Vector2d(0, 0);
@@ -44,11 +25,11 @@ public:
     virtual int isDone() = 0; //0 - Not Done, 1 - Done, 2 - Timeout
 
     Vector2d getVelocity() {
-        return realtiveTargetVel;
+        return realtiveTargetVel; //Returns in Units/Sec
     }
 
     double getAngularVelocity() {
-        return targetW;
+        return targetW; //Radians
     }
 
     //TODO Timeout structure, accel controls
@@ -65,7 +46,7 @@ public:
     void updateVel() {}
 
     positionSet predictNextPos(double deltaT) {
-        return predictWithConstantTurning(navigation.getPosition(), navigation.getVelocity(), navigation.getAngularVelocity(), deltaT);
+        return predictLinear(navigation.getPosition(), navigation.getVelocity(), navigation.getAngularVelocity(), deltaT);
     }
 
     int isDone() {
@@ -73,24 +54,8 @@ public:
     }
 };
 
-class TargetCVController : public MotionController {
-public:
-    TargetCVController(double speed, double angularSpeed) {
-        
-    }
-
-    void updateVel() {
-    
-    }
-
-    positionSet predictNextPos(double deltaT) {
-        
-    }
-
-    int isDone() {
-        
-    }
-};
+//https://wiki.purduesigbots.com/software/control-algorithms/ramsete
+//https://wiki.purduesigbots.com/software/control-algorithms/basic-pure-pursuit
 
 /*
     Motion Controller Ideas:
@@ -114,13 +79,41 @@ public:
 
 
 
+//TODO Convert Units/Second to Pct; Employ PID with navigation to ensure consistant velocity control; Robot type nees to take in wheelRadius data to calculate; Take in robot wheel radius to ensure proper rotation
+//Aceleration control also happens here to prevent slipage
 
+void setM(vex::motor m, double speed, vex::velocityUnits uni = vex::velocityUnits::pct) {
+    m.setVelocity(speed, uni);
+    if (speed == 0) {
+        m.stop();
+    }
+    else {
+        m.spin(vex::directionType::fwd);
+    }
+}
+
+void setSide(vex::motor_group m, double speed, vex::velocityUnits uni = vex::velocityUnits::pct) {
+    m.setVelocity(speed, uni);
+    if (speed == 0) {
+        m.stop();
+    }
+    else {
+        m.spin(vex::directionType::fwd);
+    }
+}
+
+//Converts a vel to motor commands
 class RobotType {
 private:
-    double maxV = 100;
+    const int baseMotorRPM = 3600; //Does not involve the 36:1, 18:1, 6:1 gear ratios
     MotionController* controller;
 
 protected:
+    double wheelRadius;
+    double driveBaseRadius;
+
+    //TODO Acceleration commands
+
     MotionController* const getController() {
         return controller;
     }
@@ -128,21 +121,15 @@ protected:
 public:
     bool setMotorControls = true;
 
-    RobotType() {
+    RobotType(double wheelRadiusIn, double driveBaseRadiusIn, double gearRatio_in_out) {
         setController(new CVController(Vector2d(0, 0), 0));
+        wheelRadius = wheelRadiusIn;
+        driveBaseRadius = driveBaseRadiusIn;
     }
 
     void setController(MotionController* newController) {
         delete controller;
         controller = newController;
-    }
-
-    double getMaxMotorVel() {
-        return maxV;
-    }
-
-    void setMaxMotorVel(double in) {
-        maxV = fclamp(fabs(in), 0, 100);
     }
 
     positionSet predictNextPos(double deltaT) {
@@ -157,6 +144,8 @@ public:
     virtual void updateMotors() = 0; //=0 requires an overrider in derived classes
 };
 
+/**
+//TODO implement base constructor
 class TankDriveType : public RobotType {
 private:
     vex::motor_group* leftSide;
@@ -264,5 +253,6 @@ public:
         }
     }
 };
+*/
 
 #endif
