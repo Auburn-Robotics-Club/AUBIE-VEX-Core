@@ -1,11 +1,14 @@
 #ifndef ROBOT_MATH_H
 #define ROBOT_MATH_H
 
-#define _USE_MATH_DEFINES
-#include "math.h"
 #include <algorithm>
 #include <vector>
 #include <sstream>
+#include "mathfeeder.h"
+#include "SMAFilter.h"
+#include "EWMAFilter.h"
+#include "BasePIDController.h"
+#include "Point2d.h"
 
 /*
 Name: robotmath.h
@@ -14,13 +17,6 @@ Written By: Carson Easterling
 Defines abstract mathmatical concepts and algorithms relevent to robot control. Includes functionality for angles, PID algorithm, beizer curves, and vectors
 
 */
-
-//Constants
-//--------------------------------------------------------------------------------------------------
-const double M_2PI = 2*M_PI;
-const double M_PI_180 = M_PI/180;
-const double M_180_PI = 180/M_PI;
-const double MAXIMUM_DOUBLE_DIFFERENCE_FOR_EQUALS_SENSORDATA = 0.001; //0.5 deg in radians = 0.008 thus 0.001 should be accurate enough given sensor capability
 
 //Filters
 //--------------------------------------------------------------------------------------------------
@@ -31,105 +27,6 @@ const double MAXIMUM_DOUBLE_DIFFERENCE_FOR_EQUALS_SENSORDATA = 0.001; //0.5 deg 
 //SloshPIDController - Limits change of output
 //BamBamController
 //For more reading: https://pidexplained.com/how-to-tune-a-pid-controller/
-
-//SMAFilter 
-//More stable; Simple Moving Average filter
-//--------------------------------------------------------------------------------------------------
-class SMAFilter{
-protected:
-  std::vector<double> data;
-
-public:
-  SMAFilter(int size);
-  SMAFilter(int size, double value);
-
-  void changeSize(double size, double value);
-
-  void clear(double value=0);
-
-  void add(double value);
-
-  double getAvg();
-};
-
-//EWMAFilter 
-//Faster, less memory; Exponetinally weighted moving average filter - https://hackaday.com/2019/09/06/sensor-filters-for-coders/
-//--------------------------------------------------------------------------------------------------
-class EWMAFilter{
-protected:
-  double k;
-  double lastData;
-
-public:
-  EWMAFilter(double kIn);
-  EWMAFilter(double kIn, double initalValue);
-
-  void setK(double kIn);
-  double getK();
-  void setLastData(double dataIn);
-
-  double getAvg(double dataIn);
-};
-
-//BasePIDController
-//--------------------------------------------------------------------------------------------------
-struct PIDValues {
-    double P;
-    double I;
-    double D;
-};
-
-class BasePIDController{
-protected: 
-  PIDValues k;
-
-  double target;
-  double error;
-
-  double setValue;
-
-  bool initalized;
-  double lastError;
-  
-  double minOutput; //Limits output and setvalue
-  double maxOutput;
-
-  double output;
-public:
-  //TODO INITALIZE PID VALUES
-  void setTarget(double targetValue, double initSetValue=0);
-  double update(double currentValue, double deltaTime);
-};
-
-
-//Point2d
-//--------------------------------------------------------------------------------------------------
-class Vector2d;
-class Point2d;
-
-class Point2d{
-  public:
-    double x;
-    double y;
-    Point2d();
-    Point2d(double X, double Y);
-};
-
-//Print operation (x, y)
-std::ostream& operator << (std::ostream& os, Point2d p);
-
-//Returns midpoint
-Point2d midpoint(Point2d a, Point2d b);
-
-Vector2d operator - (const Point2d endPoint, const Point2d startPoint);
-Point2d operator + (Point2d p, Vector2d v);
-std::vector<Point2d> operator + (const std::vector<Point2d>& pList, const std::vector<Vector2d>& vList);
-std::vector<Point2d> operator + (const std::vector<Vector2d>& vList, const std::vector<Point2d>& pList);
-
-std::vector<Point2d> operator + (const std::vector<Point2d>& pList, Vector2d v); //Offset each element in a list
-std::vector<Point2d> operator * (const std::vector<Point2d>& pList, double scale); //Scale each element in a list realitive to first point
-std::vector<Point2d> operator || (const std::vector<Point2d>& pList, double radiansCCW); //Rotate each element in list realitive to first point
-
 
 //positionSet
 //--------------------------------------------------------------------------------------------------
@@ -218,6 +115,7 @@ class Vector2d{
     Point2d operator - (Point2d &p);
 };
 
+Vector2d operator - (const Point2d endPoint, const Point2d startPoint);
 std::ostream& operator << (std::ostream& os, Vector2d v);
 std::vector<Vector2d> operator + (std::vector<Vector2d>& vList, Vector2d v); //Offset each element in a list
 std::vector<Vector2d> operator * (std::vector<Vector2d>& vList, double scale); //Scale each element in a list

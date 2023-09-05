@@ -1,173 +1,8 @@
-#include "../robotmath.h"
-
-//Filters
-//--------------------------------------------------------------------------------------------------
-
-//SMAFilter
-//-------------------------------------------------------------------------------------------------
-SMAFilter::SMAFilter(int size) { 
-  changeSize(size, 0); 
-}
-SMAFilter::SMAFilter(int size, double value) { 
-  data.resize(size, value); 
-}
-
-void SMAFilter::changeSize(double size, double value) {
-  if (size < data.size()) {
-    rotate(data.begin(), data.begin() + data.size() - size, data.end());
-  }
-  data.resize(size, value);
-}
-
-void SMAFilter::clear(double value) {
-  for (int i = 0; i < data.size(); i++) {
-    data[i] = value;
-  }
-}
-
-void SMAFilter::add(double value) {
-  rotate(data.begin(), data.begin() + 1, data.end()); // Shift Left
-  data.back() = value; // Replace last element with new data
-}
-
-double SMAFilter::getAvg() {
-  double sum = 0;
-  int s = data.size();
-  for (int i = 0; i < s; i++) {
-    sum += data[i];
-  }
-  return sum / s;
-}
-
-//EWMAFilter
-//--------------------------------------------------------------------------------------------------
-EWMAFilter::EWMAFilter(double kIn){
-  setK(kIn);
-}
-
-EWMAFilter::EWMAFilter(double kIn, double initalValue){
-  setK(kIn);
-  lastData = initalValue;
-}
-
-void EWMAFilter::setK(double kIn){
-  k = clamp(kIn, 0, 1);
-}
-
-double EWMAFilter::getK(){
-  return k;
-}
-
-void EWMAFilter::setLastData(double dataIn){
-  lastData = dataIn;
-}
-
-double EWMAFilter::getAvg(double dataIn){
-  double r = (1-k)*lastData + k*dataIn;
-  lastData = dataIn;
-  return r;
-}
-
-//BasePIDController
-//--------------------------------------------------------------------------------------------------
-void BasePIDController::setTarget(double targetSpeed, double initSetValue){
-  target = targetSpeed;
-  setValue = initSetValue;
-  lastError = 0;
-  initalized = false;
-}
-
-double BasePIDController::update(double currentValue, double deltaTime){
-  double error = target - currentValue;
-  if(!initalized){lastError = error; initalized=true;}
-
-  double deltaError = error - lastError;
-  lastError = error;
-
-  setValue = clamp(setValue + k.I * error * deltaTime, minOutput, maxOutput);
-  
-  output = clamp(
-            (k.P * error) + (setValue) + (k.D * deltaError / deltaTime), 
-            minOutput, maxOutput);
-  return output;
-}
-
-
-//Point2d
-//--------------------------------------------------------------------------------------------------
-Point2d::Point2d() {
-    x = 0;
-    y = 0;
-}
-
-Point2d::Point2d(double X, double Y) {
-  x = X;
-  y = Y;
-}
-
-std::ostream& operator << (std::ostream& os, Point2d p){
-  os << "(" << p.x << ", " << p.y << ")";
-  return os;
-}
-
-//Calculates midpoint of 2 points
-Point2d midpoint(Point2d a, Point2d b) {
-    return Point2d((a.x + b.x) * 0.5, (a.y + b.y) * 0.5);
-}
+#include "robotmath.h"
 
 Vector2d operator - (const Point2d endPoint, const Point2d startPoint) {
     return Vector2d(startPoint, endPoint);
 };
-
-Point2d operator + (Point2d p, Vector2d v) {
-    return v + p;
-};
-
-std::vector<Point2d> operator + (const std::vector<Point2d>& pList, const std::vector<Vector2d>& vList) {
-    std::vector<Point2d> result;
-    if (pList.size() >= vList.size()) {
-        for (int i = 0; i < vList.size(); i++) {
-            result.push_back(pList[i] + vList[i]);
-        }
-    } else {
-        for (int i = 0; i < pList.size(); i++) {
-            result.push_back(pList[i] + vList[i]);
-        }
-    }
-    return result;
-};
-
-std::vector<Point2d> operator + (const std::vector<Vector2d>& vList, const std::vector<Point2d>& pList) {
-    return pList + vList;
-};
-
-std::vector<Point2d> operator + (const std::vector<Point2d>& pList, Vector2d v) {
-    std::vector<Point2d> result;
-    for (int i = 0; i < pList.size(); i++) {
-        result.push_back(pList[i] + v);
-    }
-    return result;
-};
-
-std::vector<Point2d> operator * (const std::vector<Point2d>& pList, double scale) {
-    std::vector<Point2d> result;
-    for (int i = 1; i < pList.size(); i++) {
-        result.push_back(pList[0] + (Vector2d(pList[0], pList[i]).scale(scale)));
-    }
-    return result;
-};
-
-std::vector<Point2d> operator || (const std::vector<Point2d>& pList, double radiansCCW) {
-    std::vector<Point2d> result;
-    if (pList.size() > 0) {
-        result.push_back(pList[0]);
-        for (int i = 1; i < pList.size(); i++) {
-            result.push_back(pList[0] + (Vector2d(pList[0], pList[i]).getRotatedVector(radiansCCW)));
-        }
-    }
-    return result;
-};
-
 
 //positionSet
 //--------------------------------------------------------------------------------------------------
@@ -525,7 +360,7 @@ std::vector<Point2d> generateCurve(Point2d start, Point2d end, std::vector<Point
             std::vector<Point2d> endpoints;
             endpoints.push_back(start);
             for (int i = 0; i < controlPoints.size() - 1; i++) {
-                endpoints.push_back(midpoint(controlPoints[i], controlPoints[i + 1]));
+                endpoints.push_back(Point2d::midpoint(controlPoints[i], controlPoints[i + 1]));
             }
             endpoints.push_back(end);
 
@@ -557,7 +392,7 @@ std::vector<Point2d> generateCurve(Point2d start, Vector2d end, std::vector<Vect
             std::vector<Point2d> endpoints;
             endpoints.push_back(start);
             for (int i = 0; i < controlVectors.size() - 1; i++) {
-                endpoints.push_back(midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
+                endpoints.push_back(Point2d::midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
             }
             endpoints.push_back(end + start);
 
@@ -588,7 +423,7 @@ void generateCurve(std::vector<Point2d>& points, Point2d start, Point2d end, std
             std::vector<Point2d> endpoints;
             endpoints.push_back(start);
             for (int i = 0; i < controlPoints.size() - 1; i++) {
-                endpoints.push_back(midpoint(controlPoints[i], controlPoints[i + 1]));
+                endpoints.push_back(Point2d::midpoint(controlPoints[i], controlPoints[i + 1]));
             }
             endpoints.push_back(end);
 
@@ -618,7 +453,7 @@ void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, st
             std::vector<Point2d> endpoints;
             endpoints.push_back(start);
             for (int i = 0; i < controlVectors.size() - 1; i++) {
-                endpoints.push_back(midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
+                endpoints.push_back(Point2d::midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
             }
             endpoints.push_back(end + start);
 
