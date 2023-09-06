@@ -16,4 +16,14 @@ struct PIDValues {
     double D;
 };
 
+typedef struct {
+    Point2d p; //Units
+    double head; //Radians
+} positionSet;
+
+//positionSet
+std::ostream& operator << (std::ostream& os, positionSet p);
+bool operator==(const positionSet& a, const positionSet& b);
+bool operator!=(const positionSet& a, const positionSet& b);
+
 #endif
