@@ -9,6 +9,7 @@
 #include "BasePIDController.h"
 #include "Point2d.h"
 #include "Vector2d.h"
+#include "Path.h"
 
 /*
 Name: robotmath.h
@@ -87,43 +88,5 @@ positionSet predictLinear(positionSet start, Vector2d vel, double w, double t);
 positionSet predictWithConstantTurning(positionSet start, Vector2d vel, double w, double t);
 
 double calculateRadiusOfCurvature(Point2d start, Point2d middle, Point2d end);
-
-//Path
-//--------------------------------------------------------------------------------------------------
-class Path {
-protected:
-    int internalIndex = 0;
-    std::vector<positionSet> points;
-
-public:
-    Path();
-    Path(std::vector<positionSet> &pointsIn);
-
-    std::vector<positionSet>& getList();
-    void setIndex(int i = 0);
-    int size();
-    positionSet next();
-    bool hasNext();
-    int index();
-    positionSet get(int i);
-    void drop(int x);
-    void clear();
-
-    void addPointset(positionSet Point);
-    void addPointset(Point2d p, double head, bool inDeg = true);
-
-    double arclength(int start = 0, int end = -1);
-    double arclengthFromIndexTo(int end = -1);
-
-    void subpath(Path& pathIn, int start, int end);
-    Path subpath(int start, int end);
-
-    //Append
-    positionSet operator [] (int index);
-    Path& operator + (positionSet& p);
-    Path& operator + (Path& p);
-};
-
-std::ostream& operator << (std::ostream& os, Path& p);
 
 #endif
