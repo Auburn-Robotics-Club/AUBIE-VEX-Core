@@ -5,16 +5,19 @@ Vector2d::Vector2d() {
     deltaX = 1;
     deltaY = 1;
 }
+
 // Define Vector by using dX and dY
 Vector2d::Vector2d(double delta_x, double delta_y) {
   deltaX = delta_x;
   deltaY = delta_y;
 }
+
 // Define Vector using start and end points
 Vector2d::Vector2d(Point2d start, Point2d end) {
   deltaX = end.x - start.x;
   deltaY = end.y - start.y;
 }
+
 // Define Vector by using a magnitiude at a given heading
 Vector2d::Vector2d(double magnitude, double theta, bool inDegrees) {
   if (inDegrees) {
@@ -26,12 +29,15 @@ Vector2d::Vector2d(double magnitude, double theta, bool inDegrees) {
 
 // Returns dX
 double Vector2d::getX() { return deltaX; }
+
 // Returns dY
 double Vector2d::getY() { return deltaY; }
+
 // Returns the magnitude of the vector
 double Vector2d::getMagnitude() {
   return sqrt(deltaX * deltaX + deltaY * deltaY);
 }
+
 // Returns the dot product of this vector and another (The product of both vector's magnitude, + if in same direction, 0 if perendicular, - if facing opposite directions)
 double Vector2d::dot(Vector2d otherV) {
   return deltaX * otherV.deltaX + deltaY * otherV.deltaY;
@@ -60,6 +66,7 @@ double Vector2d::getAngle(Vector2d vecB) {
     return theta;
   }
 }
+
 // Returns a new Vector based on a scaling factor of this vector
 Vector2d Vector2d::scale(double s) { return Vector2d(deltaX * s, deltaY * s); }
 
