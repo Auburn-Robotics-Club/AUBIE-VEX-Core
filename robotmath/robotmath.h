@@ -21,7 +21,6 @@ Defines abstract mathmatical concepts and algorithms relevent to robot control. 
 
 //Filters
 //--------------------------------------------------------------------------------------------------
-
 //Moving median filter - Less suseptiable to shocks
 //Kalman filter
 //Time based PID controller
@@ -83,6 +82,9 @@ void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, st
 std::vector<positionSet> curveHeadings(std::vector<Point2d>& points);
 void curveHeadings(std::vector<positionSet>& posSet, std::vector<Point2d>& points);
 
+std::ostream& operator << (std::ostream& os, positionSet p);
+bool operator==(const positionSet& a, const positionSet& b);
+bool operator!=(const positionSet& a, const positionSet& b);
 positionSet predictLinear(positionSet start, Vector2d vel, double w, double t);
 //Tank drive assumed
 positionSet predictWithConstantTurning(positionSet start, Vector2d vel, double w, double t);

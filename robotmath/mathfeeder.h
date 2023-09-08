@@ -22,8 +22,4 @@ typedef struct {
     double head; //Radians
 } positionSet;
 
-std::ostream& operator << (std::ostream& os, positionSet p);
-bool operator==(const positionSet& a, const positionSet& b);
-bool operator!=(const positionSet& a, const positionSet& b);
-
 #endif
