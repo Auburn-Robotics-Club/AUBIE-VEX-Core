@@ -1,9 +1,5 @@
-#ifndef VECTOR_2D_H
-#define VECTOR_2D_H
-
-#include <sstream>
-#include <vector>
-#include "Point2d.h"
+#pragma once
+#include "base.h"
 
 /**
  * Class representing a vector with 2 dimensions.
@@ -160,5 +156,3 @@ std::ostream& operator << (std::ostream& os, Vector2d v);
 std::vector<Vector2d> operator + (std::vector<Vector2d>& vList, Vector2d v); //Offset each element in a list
 std::vector<Vector2d> operator * (std::vector<Vector2d>& vList, double scale); //Scale each element in a list
 std::vector<Vector2d> operator || (std::vector<Vector2d>& vList, double radiansCCW); //Rotate each element in list
-
-#endif

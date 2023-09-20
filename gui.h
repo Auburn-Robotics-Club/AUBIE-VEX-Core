@@ -1,6 +1,9 @@
 #ifndef ROBOT_GUI_H
 #define ROBOT_GUI_H
 
+#include "v5.h"
+#include "v5_vcs.h"
+
 extern vex::brain Brain;
 using namespace vex;
 

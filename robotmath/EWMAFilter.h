@@ -1,5 +1,5 @@
-#ifndef EWMA_FILTER_H
-#define EWMA_FILTER_H
+#pragma once
+#include "base.h"
 
 /**
  * Class for an Exponentially Weighted Moving Average Filter.
@@ -50,5 +50,3 @@ class EWMAFilter{
     */
     double getAvg(double dataIn);
 };
-
-#endif

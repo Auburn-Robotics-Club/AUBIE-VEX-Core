@@ -1,7 +1,5 @@
-#ifndef BASE_PID_CONTROLLER_H
-#define BASE_PID_CONTROLLER_H
-
-#include "mathfeeder.h"
+#pragma once
+#include "base.h"
 
 class BasePIDController{
     protected: 
@@ -45,5 +43,3 @@ class BasePIDController{
     */
     double update(double currentValue, double deltaTime);
 };
-
-#endif

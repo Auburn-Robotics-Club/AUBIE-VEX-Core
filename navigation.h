@@ -1,7 +1,7 @@
 #ifndef ROBOT_NAV_H
 #define ROBOT_NAV_H
 
-#include "robotmath.h"
+#include "robotmath/mathfeeder.h"
 #include "logger.h"
 #include "v5.h"
 #include "v5_vcs.h"

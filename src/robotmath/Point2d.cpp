@@ -1,4 +1,4 @@
-#include "robotmath.h"
+#include "robotmath/Point2d.h"
 
 Point2d::Point2d() {
     x = 0;
@@ -11,7 +11,7 @@ Point2d::Point2d(double X, double Y) {
 }
 
 //Calculates midpoint of 2 points
-Point2d::midpoint(Point2d a, Point2d b) {
+Point2d midpoint(Point2d a, Point2d b) {
     return Point2d((a.x + b.x) * 0.5, (a.y + b.y) * 0.5);
 }
 

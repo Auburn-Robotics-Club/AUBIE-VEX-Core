@@ -1,5 +1,5 @@
-#ifndef POINT_2D_H
-#define POINT_2D_H
+#pragma once
+#include "base.h"
 
 /**
  * Class for a point in 2-dimensional space.
@@ -20,14 +20,6 @@ class Point2d{
      * @param Y The y-coordinate of the point.
     */
     Point2d(double X, double Y);
-
-    /**
-     * Calculate the midpoint between 2 points.
-     * @param a The first point.
-     * @param b The second point.
-     * @return The midpoint of the 2 points.
-    */
-    static Point2d midpoint(Point2d a, Point2d b);
 };
 
 //Print operation (x, y)
@@ -41,4 +33,16 @@ std::vector<Point2d> operator + (const std::vector<Point2d>& pList, Vector2d v);
 std::vector<Point2d> operator * (const std::vector<Point2d>& pList, double scale); //Scale each element in a list realitive to first point
 std::vector<Point2d> operator || (const std::vector<Point2d>& pList, double radiansCCW); //Rotate each element in list realitive to first point
 
-#endif
+/**
+ * Calculate the midpoint between 2 points.
+ * @param a The first point.
+ * @param b The second point.
+ * @return The midpoint of the 2 points.
+*/
+Point2d midpoint(Point2d a, Point2d b);
+
+//positionSet
+typedef struct {
+    Point2d p; //Units
+    double head; //Radians
+} positionSet;

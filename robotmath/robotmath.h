@@ -1,15 +1,12 @@
 #ifndef ROBOT_MATH_H
 #define ROBOT_MATH_H
 
-#include <algorithm>
-#include <sstream>
-#include "mathfeeder.h"
-#include "SMAFilter.h"
-#include "EWMAFilter.h"
-#include "BasePIDController.h"
 #include "Point2d.h"
 #include "Vector2d.h"
 #include "Path.h"
+#include "BasePIDController.h"
+#include "EWMAFilter.h"
+#include "SMAFilter.h"
 
 /*
 Name: robotmath.h
@@ -27,42 +24,6 @@ Defines abstract mathmatical concepts and algorithms relevent to robot control. 
 //SloshPIDController - Limits change of output
 //BamBamController
 //For more reading: https://pidexplained.com/how-to-tune-a-pid-controller/
-
-//Misc Functions
-//--------------------------------------------------------------------------------------------------
-
-//Returns minimum number
-int min(int a, int b);
-double fmin(double a, double b);
-
-//Returns maximum number
-int max(int a, int b);
-double fmax(double a, double b);
-
-//Returns x if within min/max else return min/max
-int clamp(int x, int min, int max);
-double fclamp(double x, double min, double max);
-
-//sign - returns 1 if input >= 0; -1 if input < 0
-int sign(int x);
-double sign(double x);
-
-//Angles
-
-//Converts degrees to radians
-double degToRad(double degrees);
-//Converts radians to degrees
-double radToDeg(double radians);
-
-//Returns any angle between 0 - (360 || 2PI depending if input in in degrees or radians)
-double normalizeAngle(double theta, bool inRadians = true);
-
-
-//Takes two headings and gives you the smallest angle between them in radians; + if the target heading is counter clockwise of the current heading and - if clockwise
-double shortestArcToTarget(double currentHeading, double targetHeading, bool inDeg = false);
-
-//Takes two headings and returns the shortest angle between the current heading and a secent line through the circle that passes through the target heading
-double shortestArcToLine(double currentHeading, double targetHeading, bool inDeg = false);
 
 //Returns a point along a defined bezier curve at t (0-1)
 Point2d bezierFormula(Point2d initPoint, Point2d finalPoint, Point2d C1, double t);

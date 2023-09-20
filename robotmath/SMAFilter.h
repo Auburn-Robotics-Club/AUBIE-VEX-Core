@@ -1,5 +1,5 @@
-#ifndef SMA_FILTER_H
-#define SMA_FILTER_H
+#pragma once
+#include "base.h"
 
 /**
  * Class for a Simple Moving Averge data filter.
@@ -51,5 +51,3 @@ class SMAFilter{
     */
     double getAvg();
 };
-
-#endif

@@ -1,9 +1,4 @@
-#ifndef PATH_H
-#define PATH_H
-
-#include <vector>
-#include <sstream>
-#include "mathfeeder.h"
+#pragma once
 #include "Point2d.h"
 
 /**
@@ -153,5 +148,3 @@ class Path {
 };
 
 std::ostream& operator << (std::ostream& os, Path& p);
-
-#endif

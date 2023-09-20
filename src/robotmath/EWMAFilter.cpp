@@ -1,4 +1,4 @@
-#include "robotmath.h"
+#include "robotmath/EWMAFilter.h"
 
 EWMAFilter::EWMAFilter(double kIn){
   setK(kIn);
