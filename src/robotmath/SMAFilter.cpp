@@ -1,4 +1,4 @@
-#include "robotmath/SMAFilter.h"
+#include "../../robotmath/robotmath.h"
 
 SMAFilter::SMAFilter(int size) { 
   changeSize(size, 0); 

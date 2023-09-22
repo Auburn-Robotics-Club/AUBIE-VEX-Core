@@ -1,4 +1,4 @@
-#include "robotmath/robotmath.h"
+#include "../../robotmath/robotmath.h"
 
 //positionSet
 //--------------------------------------------------------------------------------------------------
@@ -22,8 +22,8 @@ bool operator!=(const positionSet& a, const positionSet& b) {
 
 Point2d bezierFormula(Point2d initPoint, Point2d finalPoint, Point2d C1, double t) {
     double inverseT = (1 - t);
-    double x = std::pow(inverseT, 2) * initPoint.x + inverseT * 2 * t * C1.x + std::pow(t, 2) * finalPoint.x;
-    double y = std::pow(inverseT, 2) * initPoint.y + inverseT * 2 * t * C1.y + std::pow(t, 2) * finalPoint.y;
+    double x = pow(inverseT, 2) * initPoint.x + inverseT * 2 * t * C1.x + pow(t, 2) * finalPoint.x;
+    double y = pow(inverseT, 2) * initPoint.y + inverseT * 2 * t * C1.y + pow(t, 2) * finalPoint.y;
     return Point2d(x, y);
 }
 
@@ -66,7 +66,7 @@ std::vector<Point2d> generateCurve(Point2d start, Point2d end, std::vector<Point
             std::vector<Point2d> endpoints;
             endpoints.push_back(start);
             for (int i = 0; i < controlPoints.size() - 1; i++) {
-                endpoints.push_back(Point2d::midpoint(controlPoints[i], controlPoints[i + 1]));
+                endpoints.push_back(midpoint(controlPoints[i], controlPoints[i + 1]));
             }
             endpoints.push_back(end);
 
@@ -98,7 +98,7 @@ std::vector<Point2d> generateCurve(Point2d start, Vector2d end, std::vector<Vect
             std::vector<Point2d> endpoints;
             endpoints.push_back(start);
             for (int i = 0; i < controlVectors.size() - 1; i++) {
-                endpoints.push_back(Point2d::midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
+                endpoints.push_back(midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
             }
             endpoints.push_back(end + start);
 
@@ -129,7 +129,7 @@ void generateCurve(std::vector<Point2d>& points, Point2d start, Point2d end, std
             std::vector<Point2d> endpoints;
             endpoints.push_back(start);
             for (int i = 0; i < controlPoints.size() - 1; i++) {
-                endpoints.push_back(Point2d::midpoint(controlPoints[i], controlPoints[i + 1]));
+                endpoints.push_back(midpoint(controlPoints[i], controlPoints[i + 1]));
             }
             endpoints.push_back(end);
 
@@ -159,7 +159,7 @@ void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, st
             std::vector<Point2d> endpoints;
             endpoints.push_back(start);
             for (int i = 0; i < controlVectors.size() - 1; i++) {
-                endpoints.push_back(Point2d::midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
+                endpoints.push_back(midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
             }
             endpoints.push_back(end + start);
 

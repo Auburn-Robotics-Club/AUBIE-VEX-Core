@@ -1,5 +1,6 @@
 #include "../logger.h"
 
+/*
 Log coreLogger = Log();
 
 //Log
@@ -186,4 +187,4 @@ void Log::error(std::string label, std::string data){
     result.shrink_to_fit();
     internalString += result;
   }
-}
+}*/

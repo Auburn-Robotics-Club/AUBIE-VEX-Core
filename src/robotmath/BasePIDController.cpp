@@ -1,4 +1,4 @@
-#include "robotmath/BasePIDController.h"
+#include "../../robotmath/robotmath.h"
 
 BasePIDController::BasePIDController(PIDValues pid_values, double init_target, double min_output, double max_output){
     k = pid_values;
@@ -7,7 +7,7 @@ BasePIDController::BasePIDController(PIDValues pid_values, double init_target, d
     maxOutput = max_output;
 }
 
-void BasePIDController::setTarget(double targetSpeed, double initSetValue=0){
+void BasePIDController::setTarget(double targetSpeed, double initSetValue){
   target = targetSpeed;
   setValue = initSetValue;
   lastError = 0;
