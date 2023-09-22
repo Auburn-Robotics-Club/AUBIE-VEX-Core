@@ -8,7 +8,7 @@ Written By: Carson Easterling
 
 #include <iostream>
 #include <sstream>
-#include "robotmath/mathfeeder.h"
+#include "robotmath/robotmath.h"
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>

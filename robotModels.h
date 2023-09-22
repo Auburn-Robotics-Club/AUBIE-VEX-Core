@@ -114,7 +114,6 @@ protected:
     double wheelRadius; //Radius of drive wheel
     double driveBaseRadius; //Distance from center of rotation to middle of drive wheels 
     double gearRatio; //Product of motor gear and drivetrain ratios
-    double maxSidePossibleSpeed; //Can be used to calculate max transit time
 
     //Max speed, and acceleration commands
     double maxLinearLimit = 100; //Pct
@@ -129,20 +128,13 @@ public:
     bool setMotorControls = true;
 
     //Length is front to back, width is side to side, wheelRadius is the radius of a drive wheel, driveBaseWidth is the distance from midwheel to the other side midwheel, gear ratio is in_out of both motor and drivetrain multiplied, maxSpeedInchesPerSecondIn at 100 percent as measured: -1 relies on math from motor
-    RobotType(double lengthIn, double widthIn, double wheelRadiusIn, double driveBaseWidthIn, double gearRatio_in_out, double maxSpeedIn = -1) {
+    RobotType(double lengthIn, double widthIn, double wheelRadiusIn, double driveBaseWidthIn, double gearRatio_in_out) {
         setController(new CVController(Vector2d(0, 0), 0));
         length = lengthIn;
         width = widthIn;
         gearRatio = gearRatio_in_out;
         wheelRadius = wheelRadiusIn;
         driveBaseRadius = driveBaseWidthIn * 0.5;
-
-        if (maxSpeedIn < 0) {
-            maxSidePossibleSpeed = BaseMotorRPM * 0.10471975512 * wheelRadius / gearRatio;
-        }
-        else {
-            maxSidePossibleSpeed = maxSpeedIn;
-        }
     }
 
     void setController(MotionController* newController) {
@@ -158,10 +150,26 @@ public:
         return getController()->isDone();
     }
 
-    double getMaxSidePossibleSpeed() {
-        return maxSidePossibleSpeed;
+    void setMaxLinearSpeed(double x){
+        maxLinearLimit = fclamp(x, 0, 100);
     }
 
+    void setMaxAngularSpeed(double x){
+        maxAngularLimit = fclamp(x, 0, 100);
+    }
+
+    double getMaxLinearSpeed(){
+        return maxLinearLimit;
+    }
+
+    double getMaxAngularSpeed(){
+        return maxAngularLimit;
+    }
+
+    double getMaxMotorAcceleration(){
+        return maxMotorAcceleration;
+    }
+    
     //Ensure Controller.updateVel is called at start of function
     virtual void updateMotors() = 0; //=0 requires an overrider in derived classes
 };
@@ -173,8 +181,8 @@ private:
     vex::motor_group* rightSide;
 
 public:
-    TankDriveType(vex::motor_group* leftSideArg, vex::motor_group* rightSideArg, double lengthIn, double widthIn, double wheelRadiusIn, double driveBaseWidthIn, double gearRatio_in_out, double maxSpeedIn = -1) :
-        RobotType(lengthIn, widthIn, wheelRadiusIn, driveBaseWidthIn, gearRatio_in_out, maxSpeedIn) {
+    TankDriveType(vex::motor_group* leftSideArg, vex::motor_group* rightSideArg, double lengthIn, double widthIn, double wheelRadiusIn, double driveBaseWidthIn, double gearRatio_in_out) :
+        RobotType(lengthIn, widthIn, wheelRadiusIn, driveBaseWidthIn, gearRatio_in_out) {
         leftSide = leftSideArg;
         rightSide = rightSideArg;
     }
@@ -185,19 +193,23 @@ public:
         double speed = getController()->getVelocity().getY();
         double w = getController()->getAngularVelocity();
         
+        speed = fclamp(speed, -maxLinearLimit, maxLinearLimit);
+        w = fclamp(w, -maxAngularLimit, maxAngularLimit);
 
         double left = speed - w;
         double right = speed + w;
 
-
-        //TODO REDO
-        if (fabs(right) > maxMotorVel) {
-            left = left - (fabs(right) - maxMotorVel) * sign(left);
-            right = maxMotorVel * sign(right);
-        }
-        if (fabs(left) > maxMotorVel) {
-            right = right - (fabs(left) - maxMotorVel) * sign(left);
-            left = maxMotorVel * sign(left);
+        double d = fabs(right) - fabs(left);
+        if(d > 0.5){
+            if (fabs(right) > 100) {
+                left = left - (fabs(right) - 100) * sign(left);
+                right = 100 * sign(right);
+            }
+        } else if (d < 0.5){
+            if (fabs(left) > 100) {
+                right = right - (fabs(left) - 100) * sign(left);
+                left = 100 * sign(left);
+            }
         }
 
         //TODO Might be able to detect slippage by comparing wheel velcity from motors to tracking wheel velocity

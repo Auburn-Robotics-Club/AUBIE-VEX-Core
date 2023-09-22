@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseGUI.h"
-#include "robotmath.h"
+#include "robotmath/robotmath.h"
 
 
 void plot(simulator::FieldGraph& graph, Point2d p, sf::Color color = simulator::colors::BLACK);
