@@ -19,8 +19,12 @@ protected:
     Vector2d realtiveTargetVel = Vector2d(0, 0);
     double targetW = 0;
 
+    bool usingStoptime = true;
+    double stoptimeMax = 0.5; //Time robot must be within error to be considered done (Seconds)
+    double speedMin = 0.5; //Speed robot must be below within within error to be considered done (In Units/Second)
+
 public:
-    virtual void updateVel() = 0;
+    virtual void updateVel(double deltaT) = 0;
     virtual positionSet predictNextPos(double deltaT) = 0;
     virtual int isDone() = 0; //0 - Not Done, 1 - Done, 2 - Timeout
 
@@ -32,6 +36,14 @@ public:
         return targetW; //Radians
     }
 
+    void useStopTime(double stoptime){
+        stoptimeMax = stoptime;
+        usingStoptime = true;
+    }
+
+    void useSpeed(double speed){
+        speedMin = speed;
+    }
     //TODO Timeout structure, accel controls
 
 };
@@ -43,7 +55,7 @@ public:
         targetW = targetOmega;
     }
 
-    void updateVel() {}
+    void updateVel(double deltaT) {}
 
     positionSet predictNextPos(double deltaT) {
         return predictLinear(navigation.getPosition(), navigation.getVelocity(), navigation.getAngularVelocity(), deltaT);
@@ -54,12 +66,59 @@ public:
     }
 };
 
+class FeedForwardController : public MotionController {
+public:
+    double linK;
+    double linC;
+    double angK;
+    double angC;
+    double linThres;
+    double angThres;
+
+    //Recommended editables
+    bool fwd = true;
+
+    FeedForwardController(double linearK, double linearC, double angularK, double angularC, double linearThreshold=1.5, double angularThreshold=degToRad(2)) {
+        linK = linearK;
+        linC = linearC;
+        angK = angularK;
+        angC = angularC;
+        linThres = linearThreshold;
+        angThres = angularThreshold;
+    }
+
+    void setDirection(bool forward){
+        fwd = forward;
+    }
+
+    void update(double deltaT) {
+        //TODO What happens if target list is empty???
+        positionSet location = navigation.getPosition();
+        positionSet target = navigation.getTarget();
+        Vector2d errorV = Vector2d(location.p, target.p);
+        double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
+
+        double angularError = shortestArcToTarget(location.head, target.head);
+        //TODO IF fwd or backwards
+        double speed = linK*error + linC*sign(error);     
+    }
+
+    positionSet predictNextPos(double deltaT) {
+        return predictLinear(navigation.getPosition(), navigation.getVelocity(), navigation.getAngularVelocity(), deltaT);
+    }
+
+    int isDone() {
+        //TODO COnsider stoptime, stopspeed, or timeouts in determination
+        //REMEMBER DO something with timeouts and isdone when target changes prob in update thread; Upate timeout timer based on if vel is less than speedMin while not in error range
+        return 0;
+    }
+};
+
 //https://wiki.purduesigbots.com/software/control-algorithms/ramsete
 //https://wiki.purduesigbots.com/software/control-algorithms/basic-pure-pursuit
 
 /*
     Motion Controller Ideas:
-        CV
         Target CV
         Linear PID
         Linear PC
@@ -103,6 +162,7 @@ void setSide(vex::motor_group m, double speed, vex::velocityUnits uni = vex::vel
 }
 
 //Converts a vel to motor commands
+CVController defaultController = CVController(Vector2d(0, 0), 0);
 class RobotType {
 private:
     const int BaseMotorRPM = 3600;
@@ -129,7 +189,7 @@ public:
 
     //Length is front to back, width is side to side, wheelRadius is the radius of a drive wheel, driveBaseWidth is the distance from midwheel to the other side midwheel, gear ratio is in_out of both motor and drivetrain multiplied, maxSpeedInchesPerSecondIn at 100 percent as measured: -1 relies on math from motor
     RobotType(double lengthIn, double widthIn, double wheelRadiusIn, double driveBaseWidthIn, double gearRatio_in_out) {
-        setController(new CVController(Vector2d(0, 0), 0));
+        setController(&defaultController);
         length = lengthIn;
         width = widthIn;
         gearRatio = gearRatio_in_out;
@@ -138,7 +198,6 @@ public:
     }
 
     void setController(MotionController* newController) {
-        delete controller;
         controller = newController;
     }
 
@@ -171,7 +230,7 @@ public:
     }
     
     //Ensure Controller.updateVel is called at start of function
-    virtual void updateMotors() = 0; //=0 requires an overrider in derived classes
+    virtual void updateMotors(double deltaT) = 0; //=0 requires an overrider in derived classes
 };
 
 
@@ -187,8 +246,8 @@ public:
         rightSide = rightSideArg;
     }
 
-    void updateMotors() {
-        getController()->updateVel();
+    void updateMotors(double deltaT) {
+        getController()->updateVel(deltaT);
 
         double speed = getController()->getVelocity().getY();
         double w = getController()->getAngularVelocity();
