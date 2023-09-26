@@ -204,14 +204,14 @@ public:
 
       if (inDeg) {
           if(inertialSensor != NULL) {
-              inertialSensor->setRotation(360 - newHead, vex::rotationUnits::deg);
+              inertialSensor->setHeading(360 - newHead, vex::rotationUnits::deg);
           }
-
+          
           newHead = degToRad(newHead);
       }
       else {
           if (inertialSensor != NULL) {
-              inertialSensor->setRotation(360 - radToDeg(newHead), vex::rotationUnits::deg);
+              inertialSensor->setHeading(360 - radToDeg(newHead), vex::rotationUnits::deg);
           }
       }
 
@@ -269,6 +269,7 @@ public:
           double left = getLeftEnc();
           double right = getRightEnc();
           deltaForward = 0.5 * (left - leftEncPrev + right - rightEncPrev);
+
           leftEncPrev = left;
           rightEncPrev = right;
 
