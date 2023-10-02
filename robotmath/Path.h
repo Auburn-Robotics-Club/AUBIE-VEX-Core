@@ -1,6 +1,8 @@
 #pragma once
 #include "Point2d.h"
 
+//TODO Maybe convert to linked list for more efficent adding/removing nodes
+
 /**
  * Class for a path of positionSets.
 */
