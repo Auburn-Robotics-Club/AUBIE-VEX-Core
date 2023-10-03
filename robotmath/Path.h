@@ -26,6 +26,7 @@ public:
 
     bool removeFromStart(int i);
     bool removeFromEnd(int i);
+    void removeAll();
     
     bool tryGetFromStart(int i, PathNode* output);
     bool tryGetFromEnd(int i, PathNode* output);
