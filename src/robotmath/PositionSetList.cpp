@@ -69,3 +69,27 @@ bool Path::removeFromStart(int i) {
 
     return true;
 }
+
+bool Path::removeFromEnd(int i) {
+    if (i < 0) {
+        return false;
+    }
+    if (i >= size) {
+        this->removeAll();
+        return true;
+    }
+
+    PathNode* n;
+    this->tryGetFromEnd(i, &n); // This will never fail because 0 <= i < size
+    
+    this->end = n->previous;
+    while (n) {
+        PathNode* temp = n;
+        n = n->next;
+        delete temp;
+    }
+
+    size -= i + 1;
+
+    return true;
+}
