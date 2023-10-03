@@ -146,3 +146,53 @@ bool Path::tryGetFromEnd(int i, PathNode** out) {
     *out = n;
     return true;
 }
+
+double Path::arclengthFromStart(int i, int count) {
+    if (count < 1) {
+        return 0;
+    }
+
+    PathNode* prev;
+    if (!this->tryGetFromStart(i, &prev)) {
+        return 0;
+    }
+
+    double sum = 0;
+    PathNode* curr = prev->next;
+    while (count > 0 && curr) {
+        double dx = prev->pose.p.x - curr->pose.p.x;
+        double dy = prev->pose.p.y - curr->pose.p.y;
+        sum += sqrtf((dx * dx) + (dy * dy));
+
+        prev = curr;
+        curr = curr->next;
+        count--;
+    }
+
+    return sum;
+}
+
+double Path::arclengthFromEnd(int i, int count) {
+    if (count < 1) {
+        return 0;
+    }
+
+    PathNode* prev;
+    if (!this->tryGetFromEnd(i, &prev)) {
+        return 0;
+    }
+
+    double sum = 0;
+    PathNode* curr = prev->previous;
+    while (count > 0 && curr) {
+        double dx = prev->pose.p.x - curr->pose.p.x;
+        double dy = prev->pose.p.y - curr->pose.p.y;
+        sum += sqrtf((dx * dx) + (dy * dy));
+
+        prev = curr;
+        curr = curr->previous;
+        count--;
+    }
+
+    return sum;
+}
