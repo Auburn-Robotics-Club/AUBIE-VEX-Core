@@ -4,23 +4,32 @@
 class PathNode {
 public:
     positionSet pose;
+    Path* path;
     PathNode* previous;
     PathNode* next;
-    PathNode* insert(positionSet set);
-    PathNode* insert(Path list);
 };
 
 class Path {
 private:
+    PathNode* start;
     PathNode* end;
+    int size;
 public:
+    PathNode* getStart() { return start; }
     PathNode* getEnd() { return end; }
-    void add(positionSet set);
-    void add(Path otherList);
-    bool remove(int i);
-    void clear();
-    bool tryGet(int i, PathNode** output);
-    bool tryGetRelative(int current, int offset, PathNode** output);
-    double arclength(int start, int count);
-    int size();
+    int getSize() { return size; }
+
+    void addToStart(positionSet set);
+    void addToStart(Path otherList);
+    void addToEnd(positionSet set);
+    void addToEnd(Path otherList);
+
+    bool removeFromStart(int i);
+    bool removeFromEnd(int i);
+    
+    bool tryGetFromStart(int i, PathNode* output);
+    bool tryGetFromEnd(int i, PathNode* output);
+    
+    double arclengthFromStart(int i, int count);
+    double arclengthFromEnd(int i, int count);
 };
