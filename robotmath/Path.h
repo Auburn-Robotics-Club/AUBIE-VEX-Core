@@ -14,6 +14,7 @@ private:
     PathNode* start;
     PathNode* end;
     int size;
+    int index; // TODO
 public:
     PathNode* getStart() { return start; }
     PathNode* getEnd() { return end; }
