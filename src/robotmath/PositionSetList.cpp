@@ -93,3 +93,14 @@ bool Path::removeFromEnd(int i) {
 
     return true;
 }
+
+void Path::removeAll() {
+    PathNode* n = this->start;
+    while (n) {
+        PathNode* temp = n;
+        n = n->next;
+        delete n;
+    }
+    this->start = this->end = nullptr;
+    size = 0;
+}
