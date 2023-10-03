@@ -50,29 +50,22 @@ bool Path::removeFromStart(int i) {
     if (i < 0) {
         return false;
     }
-
-    size--; // Removing at least 1 node if we get here
-
-    PathNode* n = this->start;
-    while (i > 0) {
-        if (!n) {
-            break;
-        }
-        n = n->next;
-        i--;
-        size--;
+    if (i >= size) {
+        this->removeAll();
+        return true;
     }
 
-    PathNode* temp = n->previous;
-    while (temp) {
-        PathNode* temp2 = temp;
-        temp = temp->previous;
-        delete temp2;
+    PathNode* n;
+    this->tryGetFromStart(i, &n); // This will never fail because 0 <= i < size
+    
+    this->start = n->next;
+    while (n) {
+        PathNode* temp = n;
+        n = n->previous;
+        delete temp;
     }
-    delete temp;
 
-    n->previous = nullptr;
-    this->start = n;
+    size -= i + 1;
 
     return true;
 }
