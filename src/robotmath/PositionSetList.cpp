@@ -46,17 +46,33 @@ void Path::addToEnd(Path other) {
     }
 }
 
-static void deleteNode(PathNode* node) {
-
-}
-
 bool Path::removeFromStart(int i) {
     if (i < 0) {
         return false;
     }
+
+    size--; // Removing at least 1 node if we get here
+
     PathNode* n = this->start;
-    while (n) {
+    while (i > 0) {
+        if (!n) {
+            break;
+        }
         n = n->next;
+        i--;
+        size--;
     }
 
+    PathNode* temp = n->previous;
+    while (temp) {
+        PathNode* temp2 = temp;
+        temp = temp->previous;
+        delete temp2;
+    }
+    delete temp;
+
+    n->previous = nullptr;
+    this->start = n;
+
+    return true;
 }
