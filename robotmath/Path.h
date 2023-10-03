@@ -28,8 +28,8 @@ public:
     bool removeFromEnd(int i);
     void removeAll();
     
-    bool tryGetFromStart(int i, PathNode* output);
-    bool tryGetFromEnd(int i, PathNode* output);
+    bool tryGetFromStart(int i, PathNode** output);
+    bool tryGetFromEnd(int i, PathNode** output);
     
     double arclengthFromStart(int i, int count);
     double arclengthFromEnd(int i, int count);
