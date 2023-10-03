@@ -1,26 +1,26 @@
 #pragma once
 #include "Point2d.h"
 
-class Path {
+class PathNode {
 public:
     positionSet pose;
-    Path* previous;
-    Path* next;
-    Path* insert(positionSet set);
-    Path* insert(PathNode list);
+    PathNode* previous;
+    PathNode* next;
+    PathNode* insert(positionSet set);
+    PathNode* insert(Path list);
 };
 
-class PathNode {
+class Path {
 private:
-    Path* end;
+    PathNode* end;
 public:
-    Path* getEnd() { return end; }
+    PathNode* getEnd() { return end; }
     void add(positionSet set);
-    void add(PathNode otherList);
+    void add(Path otherList);
     bool remove(int i);
     void clear();
-    bool tryGet(int i, Path** output);
-    bool tryGetRelative(int current, int offset, Path** output);
+    bool tryGet(int i, PathNode** output);
+    bool tryGetRelative(int current, int offset, PathNode** output);
     double arclength(int start, int count);
     int size();
 };
