@@ -1,7 +1,7 @@
 #include "PositionSetList.h"
 
-PostionSetListNode* PostionSetListNode::insert(PositionSetList list) {
-    PostionSetListNode* n = list.getEnd();
+Path* Path::insert(PathNode list) {
+    Path* n = list.getEnd();
     if (!n) {
         return this;
     }
@@ -17,17 +17,17 @@ PostionSetListNode* PostionSetListNode::insert(PositionSetList list) {
     return list.getEnd();
 }
 
-PostionSetListNode* PostionSetListNode::insert(positionSet set) {
-    PostionSetListNode* n = new PostionSetListNode();
+Path* Path::insert(positionSet set) {
+    Path* n = new Path();
     n->pose = set;
     n->previous = this;
     this->next = n;
     return n;
 }
 
-void PositionSetList::add(positionSet set) {
+void PathNode::add(positionSet set) {
     if (!this->end) {
-        PostionSetListNode* n = new PostionSetListNode();
+        Path* n = new Path();
         n->pose = set;
         //n->previous = nullptr;
         //n->next = nullptr;
@@ -38,11 +38,11 @@ void PositionSetList::add(positionSet set) {
     this->end = this->end->insert(set);
 }
 
-void PositionSetList::add(PositionSetList other) {
+void PathNode::add(PathNode other) {
     this->end = this->end->insert(other);
 }
 
-static void deleteNode(PostionSetListNode* node) {
+static void deleteNode(Path* node) {
     if (!node) {
         return;
     }
@@ -52,7 +52,7 @@ static void deleteNode(PostionSetListNode* node) {
     delete node;
 }
 
-bool PositionSetList::remove(int index) {
+bool PathNode::remove(int index) {
     if (index < 0) {
         return false;
     }
@@ -66,8 +66,8 @@ bool PositionSetList::remove(int index) {
         return false;
     }
 
-    PostionSetListNode* n = this->end;
-    PostionSetListNode* beforeN = nullptr;
+    Path* n = this->end;
+    Path* beforeN = nullptr;
     while (index > 0) {
         beforeN = n;
         n = n->previous;
@@ -81,15 +81,15 @@ bool PositionSetList::remove(int index) {
     return false;
 }
 
-void PositionSetList::clear() {
+void PathNode::clear() {
     remove(0);
 }
 
-bool PositionSetList::tryGet(int i, PostionSetListNode** out) {
+bool PathNode::tryGet(int i, Path** out) {
     if (i < 0) {
         return false;
     }
-    PostionSetListNode* node = this->end;
+    Path* node = this->end;
     while (i > 0 && node) {
         node = node->previous;
         i--;
@@ -104,13 +104,13 @@ bool PositionSetList::tryGet(int i, PostionSetListNode** out) {
     return false;
 }
 
-bool PositionSetList::tryGetRelative(int current, int offset, PostionSetListNode** out) {
+bool PathNode::tryGetRelative(int current, int offset, Path** out) {
     return tryGet(current + offset, out);
 }
 
-int PositionSetList::size() {
+int PathNode::size() {
     int count = 0;
-    PostionSetListNode* node = this->end;
+    Path* node = this->end;
     while (node) {
         node = node->previous;
         count++;
@@ -118,7 +118,7 @@ int PositionSetList::size() {
     return count;
 }
 
-double PositionSetList::arclength(int start, int count) {
+double PathNode::arclength(int start, int count) {
     if (start < 0 || count == 0) {
         return 0;
     }
@@ -127,8 +127,8 @@ double PositionSetList::arclength(int start, int count) {
         return 0;
     }
 
-    PostionSetListNode* prev = nullptr;
-    PostionSetListNode* curr = this->end;
+    Path* prev = nullptr;
+    Path* curr = this->end;
 
     while (start > 0) {       
         prev = curr;
