@@ -117,6 +117,10 @@ bool Path::tryGetFromStart(int i, PathNode** out) {
         n = n->next;
         i--;
     }
+
+    if (!n) {
+        return false;
+    }
     
     *out = n;
     return true;
@@ -135,6 +139,10 @@ bool Path::tryGetFromEnd(int i, PathNode** out) {
         i--;
     }
     
+    if (!n) {
+        return false;
+    }
+
     *out = n;
     return true;
 }
