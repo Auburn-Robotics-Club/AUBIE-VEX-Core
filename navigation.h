@@ -390,7 +390,7 @@ private:
 public:
     Navigator() {
         //stopRadius needs to be init
-        //Starting pos needs to be init
+        //Starting pos needs to be init TODO
     }
 
     //Set starting Position
@@ -518,6 +518,7 @@ public:
     }
 
     positionSet getTarget() {
+        //TODO IF NO TARGET RETURN CURRENT POSITION; DO THIS FOR NEXT, ETC
         return targetPath[getTargetIndex()];
     }
 
@@ -571,7 +572,7 @@ public:
     double currentRadiusOfCurvature(){
         double v = getVelocity().getMagnitude();
         double a = getVelocity().getUnitVector().cross(getAcceleration());
-        if (abs(a) < 0.0001) { return 0; }
+        if (fabs(a) < 0.0001) { return 0; }
         return (v * v / a);
     }
 };
