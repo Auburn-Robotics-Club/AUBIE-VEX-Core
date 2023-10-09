@@ -147,52 +147,104 @@ bool Path::tryGetFromEnd(int i, PathNode** out) {
     return true;
 }
 
-double Path::arclengthFromStart(int i, int count) {
-    if (count < 1) {
-        return 0;
-    }
-
-    PathNode* prev;
-    if (!this->tryGetFromStart(i, &prev)) {
+double Path::arclength() {
+    if (size < 2) {
         return 0;
     }
 
     double sum = 0;
-    PathNode* curr = prev->next;
-    while (count > 0 && curr) {
-        double dx = prev->pose.p.x - curr->pose.p.x;
-        double dy = prev->pose.p.y - curr->pose.p.y;
-        sum += sqrtf((dx * dx) + (dy * dy));
-
-        prev = curr;
-        curr = curr->next;
-        count--;
-    }
-
-    return sum;
-}
-
-double Path::arclengthFromEnd(int i, int count) {
-    if (count < 1) {
-        return 0;
-    }
-
-    PathNode* prev;
-    if (!this->tryGetFromEnd(i, &prev)) {
-        return 0;
-    }
-
-    double sum = 0;
-    PathNode* curr = prev->previous;
-    while (count > 0 && curr) {
+    PathNode* prev = this->start;
+    PathNode* curr = this->start->next;
+    while (curr) {
         double dx = prev->pose.p.x - curr->pose.p.x;
         double dy = prev->pose.p.y - curr->pose.p.y;
         sum += sqrtf((dx * dx) + (dy * dy));
 
         prev = curr;
         curr = curr->previous;
-        count--;
     }
 
     return sum;
+}
+
+Path Path::subpath(int s, int e) {
+    Path newPath;
+    newPath.start = newPath.end = nullptr;
+    newPath.size = newPath.index = 0;
+    if (size == 0) {
+        return newPath;
+    }
+
+    if (s < 0) {
+        s = 0;
+    }
+    if (e >= size) {
+        e = size - 1;
+    }
+
+    newPath.index = this->index - s;
+
+    PathNode* newStart = this->start; 
+    for (int i = 0; i < s; i++) {
+        if (!newStart->next) {
+            break;
+        }
+        newStart = newStart->next;
+    }
+    
+    PathNode* newEnd = newStart;
+    int count = end - start;
+    for (int i = 0; i < count; i++) {
+        if (!newEnd->next) {
+            break;
+        }
+        newEnd = newEnd->next;
+        newPath.size++;
+    }
+
+    newPath.start = newStart;
+    newPath.end = newEnd;
+    newPath.copyNodes();
+
+    return newPath;
+}
+
+void Path::copyNodes() {
+    PathNode* oldNode = this->start;
+    PathNode* prev = nullptr;
+    while (oldNode) {
+        PathNode* n = new PathNode();
+        n->pose = oldNode->pose;
+        n->previous = prev;
+        if (prev) {
+            prev->next = n;
+        }
+        prev = n;
+        oldNode = oldNode->next;
+    }
+    
+}
+
+positionSet Path::next(bool shift = false) {
+    PathNode* node;
+    int i = min(this->index + 1, size - 1);
+    if (!this->tryGetFromStart(i, &node)) {
+        return {};
+    }
+    if (shift) {
+        this->index = i;
+    }
+    return node->pose;
+}
+
+positionSet Path::previous(bool shift = false) {
+    PathNode* node;
+    int i = max(this->index - 1, 0);
+    if (!this->tryGetFromStart(i, &node)) {
+        return {};
+    }
+    if (shift) {
+        this->index = i;
+    }
+    return node->pose;
 }
