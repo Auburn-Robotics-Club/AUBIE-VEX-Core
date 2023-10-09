@@ -448,15 +448,15 @@ public:
         //TODO Target management, events, etc
         //Hanndle Tagrte management, calculating arclength, curvature, nextTagrte, target vector, etc; Motion contoller decides when next tagret is, navigation just answers question about the path
 
-        if (previousPath.size() >= lastPointCap) {
-            previousPath.drop(1);
+        if (previousPath.getSize() >= lastPointCap) {
+            previousPath.removeFromStart(1);
         }
-        previousPath.addPointset(currentPos);
+        previousPath.addToEnd(currentPos);
         previousPos = currentPos;
     }
 
     void clearTargets() {
-        targetPath.clear();
+        targetPath.removeAll();
     }
 
     void shiftTarget() {
@@ -466,27 +466,27 @@ public:
     void addTarget(double x, double y) {
         Point2d p = Point2d(x, y);
         lastTarget = { p, normalizeAngle(Vector2d(1, 0).getAngle(Vector2d(lastTarget.p, p))) };
-        targetPath.addPointset(lastTarget);
+        targetPath.addToEnd(lastTarget);
     }
 
     void addTarget(double heading, bool inDeg = true) {
         if (inDeg) { heading = degToRad(heading); }
         heading = normalizeAngle(heading);
         lastTarget = { lastTarget.p, heading };
-        targetPath.addPointset(lastTarget);
+        targetPath.addToEnd(lastTarget);
     }
 
     void addTarget(double x, double y, double heading, bool inDeg = true) {
         if (inDeg) { heading = degToRad(heading); }
         lastTarget = { Point2d(x, y), heading };
-        targetPath.addPointset(lastTarget);
+        targetPath.addToEnd(lastTarget);
     }
 
     void addTarget(positionSet in, bool inDeg = true) {
         if (inDeg) { in.head = degToRad(in.head); }
         in.head = normalizeAngle(in.head);
         lastTarget = in;
-        targetPath.addPointset(in);
+        targetPath.addToEnd(in);
     }
 
     void addTarget(Vector2d in) {
@@ -501,7 +501,7 @@ public:
     void addRelTarget(double heading, bool inDeg = true) {
         if (inDeg) { heading = degToRad(heading); }
         lastTarget = { lastTarget.p, normalizeAngle(currentPos.head + heading) };
-        targetPath.addPointset(lastTarget);
+        targetPath.addToEnd(lastTarget);
     }
 
     //Getters
@@ -514,15 +514,23 @@ public:
     }
 
     int getTargetIndex() {
-        return targetPath.index();
+        return targetPath.getIndex();
     }
 
     positionSet getTarget() {
-        return targetPath[getTargetIndex()];
+        PathNode* n;
+        if (!targetPath.tryGetFromEnd(targetPath.getIndex(), &n)) {
+            return {};
+        }
+        return n->pose;
     }
 
     positionSet getNextTarget() {
-        return targetPath[getTargetIndex() + 1];
+        PathNode* n;
+        if (!targetPath.tryGetFromEnd(targetPath.getIndex() + 1, &n)) {
+            return getTarget(); // TODO: determine if this is what we want
+        }
+        return n->pose;
     }
 
     Path& getPreviousPath() {
