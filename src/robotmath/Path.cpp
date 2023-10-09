@@ -46,6 +46,37 @@ void Path::addToEnd(Path other) {
     }
 }
 
+void Path::insert(int index, positionSet set) {
+    if (index < 0) {
+        return;
+    }
+    if (index >= this->size) {
+        index = this->size - 1;
+    }
+    PathNode* n = this->start;
+    for (int i = 0; i < index; i++) {
+        n = n->next;
+    }
+    PathNode* newNode = new PathNode();
+    newNode->pose = set;
+    newNode->previous = n;
+    newNode->next = n->next;
+    if (newNode->next) {
+        newNode->next->previous = newNode;
+    }
+    n->next = n;
+    this->size++;
+}
+
+void Path::insert(int index, Path path) {
+    PathNode* other = path.start;
+    while (other) {
+        this->insert(index, other->pose);
+        other = other->next;
+        index++;
+    }
+}
+
 bool Path::removeFromStart(int i) {
     if (i < 0) {
         return false;
