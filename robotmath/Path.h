@@ -1,6 +1,8 @@
 #pragma once
 #include "Point2d.h"
 
+class Path;
+
 class PathNode {
 public:
     positionSet pose;
