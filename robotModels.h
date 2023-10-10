@@ -24,14 +24,7 @@ public:
     virtual void updateVel(double deltaT) = 0; //Update vel targets
     virtual positionSet predictNextPos(double deltaT) = 0; //Predict next location at +deltaT
     virtual bool isDone() = 0; //Is stopped at target?
-    
-    bool updateTimeout(double deltaT) {
-        //Updates timeout vars based on isDone, then checks to see if timedout
-    }
-
-    void refresh() {
-        //Clears timeout vars, zeros out target vels
-    }
+    virtual void refresh() = 0;
 
     Vector2d getVelocity() {
         return realtiveTargetVel; //Returns in Pct/Sec
@@ -50,6 +43,7 @@ public:
     }
 
     void updateVel(double deltaT) {}
+    void refresh() {}
 
     positionSet predictNextPos(double deltaT) {
         return predictLinear(navigation.getPosition(), navigation.getVelocity(), navigation.getAngularVelocity(), deltaT);
@@ -60,7 +54,7 @@ public:
     }
 };
 
-class FeedForwardController : public MotionController {
+class FeedForwardDriveController : public MotionController {
 public:
     double linK;
     double linC;
@@ -74,7 +68,7 @@ public:
     //Recommended editables
     bool fwd = true;
 
-    FeedForwardController(double linearK, double linearC, double angularK, double angularC, 
+    FeedForwardDriveController(double linearK, double linearC, double angularK, double angularC, 
                           double linearThreshold=1, double motionAngularLimit=degToRad(20), double noAngleUpdateThreshold=5, double turnAngularThreshold=degToRad(2)) {
         linK = linearK;
         linC = linearC;
@@ -92,7 +86,7 @@ public:
 
     void updateVel(double deltaT) {
         positionSet location = navigation.getPosition();
-        positionSet target = navigation.getTarget(); //TODO What happens if target list is empty? - 
+        positionSet target = navigation.getTarget();
         Vector2d errorV = Vector2d(location.p, target.p);
 
         double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
@@ -135,6 +129,69 @@ public:
 
         return (navigation.isLinearStopped() && navigation.isRotationalStopped() && (errorV.getMagnitude() < linThres));
     }
+
+    void refresh(){};
+};
+
+class FeedForwardTurnController : public MotionController {
+private:
+    int direction = 0; //0 = Shortest, 1 = Forced CCW, 2 = Forced CW
+public:
+    double p;
+    double c;
+    double thres;
+
+    FeedForwardTurnController(double k, double constant, double threshold=degToRad(1)){
+        p = k;
+        c = constant;
+        thres = threshold;
+    }
+
+    void setDirection(int d){
+        direction = clamp(d, 0, 2);
+    }
+
+    void updateVel(double deltaT) {
+        positionSet location = navigation.getPosition();
+        positionSet target = navigation.getTarget();
+
+        double error = shortestArcToTarget(location.head, target.head);
+        switch(direction){
+            case 1:
+                if(error < 0){
+                    error = M_2PI + error;
+                }
+            break;
+            case 2:
+                if(error > 0){
+                    error = M_2PI - error;
+                }
+            break;
+        }
+
+        realtiveTargetVel = Vector2d(0, 0);
+
+        if(fabs(error) > thres){
+            targetW = error*p + c*sign(error);
+        } else {
+            targetW = 0;
+        }
+    }
+     
+    bool isDone() {
+        //IF no next targets or if next target when shifting reset timeouts (prob handle in diff function)
+        positionSet location = navigation.getPosition();
+        positionSet target = navigation.getTarget(); //TODO What happens if target list is empty? - 
+        double error = shortestArcToTarget(location.head, target.head);
+
+        return (navigation.isRotationalStopped() && (abs(error) < thres));
+    }
+    
+    positionSet predictNextPos(double deltaT) {
+        return predictLinear(navigation.getPosition(), Vector2d(0, 0), navigation.getAngularVelocity(), deltaT);
+    }
+
+    void refresh(){};
 };
 
 //https://wiki.purduesigbots.com/software/control-algorithms/ramsete

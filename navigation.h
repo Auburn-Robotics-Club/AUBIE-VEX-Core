@@ -445,9 +445,6 @@ public:
 
         updateStopTime(deltaTime);
 
-        //TODO Target management, events, etc
-        //Hanndle Tagrte management, calculating arclength, curvature, nextTagrte, target vector, etc; Motion contoller decides when next tagret is, navigation just answers question about the path
-
         if (previousPath.size() >= lastPointCap) {
             previousPath.drop(1);
         }
@@ -518,12 +515,23 @@ public:
     }
 
     positionSet getTarget() {
-        //TODO IF NO TARGET RETURN CURRENT POSITION; DO THIS FOR NEXT, ETC
-        return targetPath[getTargetIndex()];
+        if(targetPath.index() < targetPath.size()){
+            return targetPath[getTargetIndex()];
+        }
+        return getPosition(); //If no targets exist we want to stay in our current position
     }
 
     positionSet getNextTarget() {
-        return targetPath[getTargetIndex() + 1];
+        if(targetPath.index() < targetPath.size() - 2){
+            return targetPath[getTargetIndex() + 1];
+        } else {
+            return getTarget(); //Returns target or current position
+        }
+        
+    }
+
+    void shiftTarget(){
+        
     }
 
     Path& getPreviousPath() {
