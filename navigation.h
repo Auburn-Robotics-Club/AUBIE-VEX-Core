@@ -390,7 +390,7 @@ private:
 public:
     Navigator() {
         //stopRadius needs to be init
-        //Starting pos needs to be init
+        //Starting pos needs to be init TODO
     }
 
     //Set starting Position
@@ -445,18 +445,15 @@ public:
 
         updateStopTime(deltaTime);
 
-        //TODO Target management, events, etc
-        //Hanndle Tagrte management, calculating arclength, curvature, nextTagrte, target vector, etc; Motion contoller decides when next tagret is, navigation just answers question about the path
-
-        if (previousPath.getSize() >= lastPointCap) {
-            previousPath.removeFromStart(1);
+        if (previousPath.size() >= lastPointCap) {
+            previousPath.drop(1);
         }
-        previousPath.addToEnd(currentPos);
+        previousPath.addPointset(currentPos);
         previousPos = currentPos;
     }
 
     void clearTargets() {
-        targetPath.removeAll();
+        targetPath.clear();
     }
 
     void shiftTarget() {
@@ -466,27 +463,27 @@ public:
     void addTarget(double x, double y) {
         Point2d p = Point2d(x, y);
         lastTarget = { p, normalizeAngle(Vector2d(1, 0).getAngle(Vector2d(lastTarget.p, p))) };
-        targetPath.addToEnd(lastTarget);
+        targetPath.addPointset(lastTarget);
     }
 
     void addTarget(double heading, bool inDeg = true) {
         if (inDeg) { heading = degToRad(heading); }
         heading = normalizeAngle(heading);
         lastTarget = { lastTarget.p, heading };
-        targetPath.addToEnd(lastTarget);
+        targetPath.addPointset(lastTarget);
     }
 
     void addTarget(double x, double y, double heading, bool inDeg = true) {
         if (inDeg) { heading = degToRad(heading); }
         lastTarget = { Point2d(x, y), heading };
-        targetPath.addToEnd(lastTarget);
+        targetPath.addPointset(lastTarget);
     }
 
     void addTarget(positionSet in, bool inDeg = true) {
         if (inDeg) { in.head = degToRad(in.head); }
         in.head = normalizeAngle(in.head);
         lastTarget = in;
-        targetPath.addToEnd(in);
+        targetPath.addPointset(in);
     }
 
     void addTarget(Vector2d in) {
@@ -501,7 +498,7 @@ public:
     void addRelTarget(double heading, bool inDeg = true) {
         if (inDeg) { heading = degToRad(heading); }
         lastTarget = { lastTarget.p, normalizeAngle(currentPos.head + heading) };
-        targetPath.addToEnd(lastTarget);
+        targetPath.addPointset(lastTarget);
     }
 
     //Getters
@@ -514,25 +511,25 @@ public:
     }
 
     int getTargetIndex() {
-        return targetPath.getIndex();
+        return targetPath.index();
     }
 
     positionSet getTarget() {
-        PathNode* n;
-        if (!targetPath.tryGetFromEnd(targetPath.getIndex(), &n)) {
-            return {};
+        if(targetPath.index() < targetPath.size()){
+            return targetPath[getTargetIndex()];
         }
-        return n->pose;
+        return getPosition(); //If no targets exist we want to stay in our current position
     }
 
     positionSet getNextTarget() {
-        PathNode* n;
-        if (!targetPath.tryGetFromEnd(targetPath.getIndex() + 1, &n)) {
-            return getTarget(); // TODO: determine if this is what we want
+        if(targetPath.index() < targetPath.size() - 2){
+            return targetPath[getTargetIndex() + 1];
+        } else {
+            return getTarget(); //Returns target or current position
         }
-        return n->pose;
+        
     }
-
+    
     Path& getPreviousPath() {
         return previousPath;
     }
@@ -579,7 +576,7 @@ public:
     double currentRadiusOfCurvature(){
         double v = getVelocity().getMagnitude();
         double a = getVelocity().getUnitVector().cross(getAcceleration());
-        if (abs(a) < 0.0001) { return 0; }
+        if (fabs(a) < 0.0001) { return 0; }
         return (v * v / a);
     }
 };

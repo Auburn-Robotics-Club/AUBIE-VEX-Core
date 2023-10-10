@@ -14,38 +14,25 @@ Written By: Carson Easterling
 #include "v5_vcs.h"
 
 //Commands a velocity based on pos
+//Timeouts are measured on the controller end but called from and terminated at the robot end
 class MotionController {
 protected:
     Vector2d realtiveTargetVel = Vector2d(0, 0);
     double targetW = 0;
 
-    bool usingStoptime = true;
-    double stoptimeMax = 0.5; //Time robot must be within error to be considered done (Seconds)
-    double speedMin = 0.5; //Speed robot must be below within within error to be considered done (In Units/Second)
-
 public:
-    virtual void updateVel(double deltaT) = 0;
-    virtual positionSet predictNextPos(double deltaT) = 0;
-    virtual int isDone() = 0; //0 - Not Done, 1 - Done, 2 - Timeout
+    virtual void updateVel(double deltaT) = 0; //Update vel targets
+    virtual positionSet predictNextPos(double deltaT) = 0; //Predict next location at +deltaT
+    virtual bool isDone() = 0; //Is stopped at target?
+    virtual void refresh() = 0;
 
     Vector2d getVelocity() {
-        return realtiveTargetVel; //Returns in Units/Sec
+        return realtiveTargetVel; //Returns in Pct/Sec
     }
 
     double getAngularVelocity() {
         return targetW; //Radians
     }
-
-    void useStopTime(double stoptime){
-        stoptimeMax = stoptime;
-        usingStoptime = true;
-    }
-
-    void useSpeed(double speed){
-        speedMin = speed;
-    }
-    //TODO Timeout structure, accel controls
-
 };
 
 class CVController : public MotionController {
@@ -56,17 +43,18 @@ public:
     }
 
     void updateVel(double deltaT) {}
+    void refresh() {}
 
     positionSet predictNextPos(double deltaT) {
         return predictLinear(navigation.getPosition(), navigation.getVelocity(), navigation.getAngularVelocity(), deltaT);
     }
 
-    int isDone() {
-        return 0;
+    bool isDone() {
+        return false;
     }
 };
 
-class FeedForwardController : public MotionController {
+class FeedForwardDriveController : public MotionController {
 public:
     double linK;
     double linC;
@@ -74,44 +62,136 @@ public:
     double angC;
     double linThres;
     double angThres;
+    double angleUpdateThes;
+    double motionAngularCone;
 
     //Recommended editables
     bool fwd = true;
 
-    FeedForwardController(double linearK, double linearC, double angularK, double angularC, double linearThreshold=1.5, double angularThreshold=degToRad(2)) {
+    FeedForwardDriveController(double linearK, double linearC, double angularK, double angularC, 
+                          double linearThreshold=1, double motionAngularLimit=degToRad(20), double noAngleUpdateThreshold=5, double turnAngularThreshold=degToRad(2)) {
         linK = linearK;
         linC = linearC;
         angK = angularK;
         angC = angularC;
         linThres = linearThreshold;
-        angThres = angularThreshold;
+        angThres = turnAngularThreshold;
+        angleUpdateThes = noAngleUpdateThreshold;
+        motionAngularCone = motionAngularLimit;
     }
 
     void setDirection(bool forward){
         fwd = forward;
     }
 
-    void update(double deltaT) {
-        //TODO What happens if target list is empty???
+    void updateVel(double deltaT) {
         positionSet location = navigation.getPosition();
         positionSet target = navigation.getTarget();
         Vector2d errorV = Vector2d(location.p, target.p);
-        double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
 
-        double angularError = shortestArcToTarget(location.head, target.head);
-        //TODO IF fwd or backwards
-        double speed = linK*error + linC*sign(error);     
+        double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
+        double targetHead = Vector2d(1, 0).getAngle(errorV);
+
+        double angularError = 0;
+        if(errorV.getMagnitude() > angleUpdateThes){
+            if(fwd){
+                angularError = shortestArcToTarget(location.head, targetHead);
+            } else {
+                angularError = shortestArcToTarget(location.head, targetHead + M_PI);
+            }
+        }
+
+        double speed = 0;
+        if(fabs(error) > linThres) { 
+            if (fabs(angularError) < motionAngularCone){
+                speed = linK*error + linC*sign(error); 
+            }
+        }
+        realtiveTargetVel = Vector2d(0, speed);
+
+        //Angular speed
+        if(fabs(angularError) > angThres){
+            targetW = angularError*angK + angC*sign(angularError);
+        } else {
+            targetW = 0;
+        }
     }
 
     positionSet predictNextPos(double deltaT) {
         return predictLinear(navigation.getPosition(), navigation.getVelocity(), navigation.getAngularVelocity(), deltaT);
     }
 
-    int isDone() {
-        //TODO COnsider stoptime, stopspeed, or timeouts in determination
-        //REMEMBER DO something with timeouts and isdone when target changes prob in update thread; Upate timeout timer based on if vel is less than speedMin while not in error range
-        return 0;
+    bool isDone() {
+        //IF no next targets or if next target when shifting reset timeouts (prob handle in diff function)
+        positionSet location = navigation.getPosition();
+        positionSet target = navigation.getTarget(); //TODO What happens if target list is empty? - 
+        Vector2d errorV = Vector2d(location.p, target.p);
+
+        return (navigation.isLinearStopped() && navigation.isRotationalStopped() && (errorV.getMagnitude() < linThres));
     }
+
+    void refresh(){};
+};
+
+class FeedForwardTurnController : public MotionController {
+private:
+    int direction = 0; //0 = Shortest, 1 = Forced CCW, 2 = Forced CW
+public:
+    double p;
+    double c;
+    double thres;
+
+    FeedForwardTurnController(double k, double constant, double threshold=degToRad(1)){
+        p = k;
+        c = constant;
+        thres = threshold;
+    }
+
+    void setDirection(int d){
+        direction = clamp(d, 0, 2);
+    }
+
+    void updateVel(double deltaT) {
+        positionSet location = navigation.getPosition();
+        positionSet target = navigation.getTarget();
+
+        double error = shortestArcToTarget(location.head, target.head);
+        switch(direction){
+            case 1:
+                if(error < 0){
+                    error = M_2PI + error;
+                }
+            break;
+            case 2:
+                if(error > 0){
+                    error = M_2PI - error;
+                }
+            break;
+        }
+
+        realtiveTargetVel = Vector2d(0, 0);
+
+        if(fabs(error) > thres){
+            targetW = error*p + c*sign(error);
+        } else {
+            targetW = 0;
+        }
+    }
+     
+    bool isDone() {
+        //IF no next targets or if next target when shifting reset timeouts (prob handle in diff function)
+        positionSet location = navigation.getPosition();
+        positionSet target = navigation.getTarget(); //TODO What happens if target list is empty? - 
+        double error = shortestArcToTarget(location.head, target.head);
+
+        return (navigation.isRotationalStopped() && (abs(error) < thres));
+    }
+    
+    positionSet predictNextPos(double deltaT) {
+        return predictLinear(navigation.getPosition(), Vector2d(0, 0), navigation.getAngularVelocity(), deltaT);
+    }
+
+    void refresh(){};
 };
 
 //https://wiki.purduesigbots.com/software/control-algorithms/ramsete
@@ -161,6 +241,8 @@ void setSide(vex::motor_group m, double speed, vex::velocityUnits uni = vex::vel
     }
 }
 
+//TODO Have robot class select controllers to move through target path
+
 //Converts a vel to motor commands
 CVController defaultController = CVController(Vector2d(0, 0), 0);
 class RobotType {
@@ -186,6 +268,7 @@ protected:
 
 public:
     bool setMotorControls = true;
+    bool controllerActive = true;
 
     //Length is front to back, width is side to side, wheelRadius is the radius of a drive wheel, driveBaseWidth is the distance from midwheel to the other side midwheel, gear ratio is in_out of both motor and drivetrain multiplied, maxSpeedInchesPerSecondIn at 100 percent as measured: -1 relies on math from motor
     RobotType(double lengthIn, double widthIn, double wheelRadiusIn, double driveBaseWidthIn, double gearRatio_in_out) {
@@ -198,6 +281,7 @@ public:
     }
 
     void setController(MotionController* newController) {
+        newController->refresh();
         controller = newController;
     }
 
@@ -247,10 +331,14 @@ public:
     }
 
     void updateMotors(double deltaT) {
-        getController()->updateVel(deltaT);
+        double speed = 0;
+        double w = 0;
 
-        double speed = getController()->getVelocity().getY();
-        double w = getController()->getAngularVelocity();
+        if(controllerActive){
+            getController()->updateVel(deltaT);
+            speed = getController()->getVelocity().getY();
+            w = getController()->getAngularVelocity();
+        }
         
         speed = fclamp(speed, -maxLinearLimit, maxLinearLimit);
         w = fclamp(w, -maxAngularLimit, maxAngularLimit);
@@ -271,7 +359,7 @@ public:
             }
         }
 
-        //TODO Might be able to detect slippage by comparing wheel velcity from motors to tracking wheel velocity
+        //TODO accel controls
 
         if (setMotorControls) {
             setSide(*leftSide, left);
