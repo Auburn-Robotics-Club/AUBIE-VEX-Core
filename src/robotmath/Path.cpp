@@ -1,4 +1,4 @@
-#include "Path.h"
+#include "../../robotmath/Path.h"
 
 void Path::addToStart(positionSet pose) {
     PathNode* n = new PathNode();
@@ -256,7 +256,7 @@ void Path::copyNodes() {
     
 }
 
-positionSet Path::next(bool shift = false) {
+positionSet Path::next(bool shift) {
     PathNode* node;
     int i = min(this->index + 1, size - 1);
     if (!this->tryGetFromStart(i, &node)) {
@@ -268,7 +268,7 @@ positionSet Path::next(bool shift = false) {
     return node->pose;
 }
 
-positionSet Path::previous(bool shift = false) {
+positionSet Path::previous(bool shift) {
     PathNode* node;
     int i = max(this->index - 1, 0);
     if (!this->tryGetFromStart(i, &node)) {
