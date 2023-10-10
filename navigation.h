@@ -529,11 +529,7 @@ public:
         }
         
     }
-
-    void shiftTarget(){
-        
-    }
-
+    
     Path& getPreviousPath() {
         return previousPath;
     }
