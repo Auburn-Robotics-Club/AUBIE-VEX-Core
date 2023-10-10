@@ -517,6 +517,10 @@ public:
         return targetPath.getIndex();
     }
 
+    int getTargetSize(){
+        return targetPath.getSize();
+    }
+
     positionSet getTarget() {
         PathNode* n;
         if (!targetPath.tryGetFromEnd(targetPath.getIndex(), &n)) {

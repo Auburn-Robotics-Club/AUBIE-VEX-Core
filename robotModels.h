@@ -194,6 +194,63 @@ public:
     void refresh(){};
 };
 
+class StraightPathController : public MotionController {
+private:
+    FeedForwardDriveController* linCont;
+    FeedForwardTurnController* rotCont;
+    bool turning = true;
+public:
+    StraightPathController(FeedForwardDriveController* linearController, FeedForwardTurnController* turnController){
+        linCont = linearController;
+        rotCont = turnController;
+    }
+
+    void updateVel(double deltaT){
+        if(!isDone()){
+            if(turning){
+                rotCont->updateVel(deltaT);
+                realtiveTargetVel = rotCont->getVelocity();
+                targetW = rotCont->getAngularVelocity();
+
+                if(rotCont->isDone()){
+                    turning = false;
+                    linCont->refresh();
+                }
+            } else {
+                linCont->updateVel(deltaT);
+                realtiveTargetVel = linCont->getVelocity();
+                targetW = linCont->getAngularVelocity();
+
+                if(linCont->isDone()){
+                    turning = true;
+                    rotCont->refresh();
+                    navigation.shiftTarget();
+                }
+            }
+        } else {
+            realtiveTargetVel = Vector2d(0, 0);
+            targetW = 0;
+        }
+    }
+    
+    positionSet predictNextPos(double deltaT){
+        if(turning){
+            return rotCont->predictNextPos(deltaT);
+        } else {
+            return linCont->predictNextPos(deltaT);
+        }
+    }
+
+    bool isDone(){
+        return !(navigation.getTargetIndex() < navigation.getTargetSize());
+    }
+
+    void refresh(){
+        rotCont->refresh();
+        linCont->refresh();
+    }
+};
+
 //https://wiki.purduesigbots.com/software/control-algorithms/ramsete
 //https://wiki.purduesigbots.com/software/control-algorithms/basic-pure-pursuit
 

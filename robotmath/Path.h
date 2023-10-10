@@ -15,8 +15,8 @@ class Path {
 private:
     PathNode* start;
     PathNode* end;
-    int size;
-    int index;
+    int size = 0;
+    int index = 0;
     void copyNodes();
 public:
     PathNode* getStart() { return start; }
