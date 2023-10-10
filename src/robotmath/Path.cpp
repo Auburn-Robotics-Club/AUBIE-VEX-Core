@@ -1,166 +1,281 @@
-#include "../../robotmath/robotmath.h"
+#include "Path.h"
 
-Path::Path() {
-    //STUB
-};
+void Path::addToStart(positionSet pose) {
+    PathNode* n = new PathNode();
+    n->path = this;
+    n->pose = pose;
+    n->previous = nullptr;
+    n->next = this->start;
 
-Path::Path(std::vector<positionSet> &pointsIn) {
-    for (int i = 0; i < pointsIn.size(); i++) {
-        addPointset(pointsIn[i]);
-    }
-};
-
-std::vector<positionSet>& Path::getList() {
-    return points;
-};
-
-void Path::setIndex(int i) {
-    if (abs(i) >= size()) {
-        i = sign(i) * (size() - 1);
-    }
-    if (i < 0) {
-        i = size() + i;
-    }
-    internalIndex = i;
-};
-
-int Path::size() {
-    return points.size();
-};
-
-positionSet Path::next() {
-    if (hasNext()) {
-        internalIndex++;
-        return get(internalIndex);
-    }
-    return { Point2d(0, 0), 0 };
-};
-
-bool Path::hasNext() {
-    if (internalIndex < size()) {
-        return true;
-    }
-    return false;
-};
-
-int Path::index() {
-    return internalIndex;
-};
-
-positionSet Path::get(int i) {
-    if (i >= 0) {
-        if (i < size()) {
-            return points[i];
-        }
-        else {
-            return points[size() - 1];
-        }
-    }
-    else {
-        if (abs(i) > size()) { 
-            return points[0];
-        } else {
-            return points[size() + i];
-        }
-    }
-};
-
-void Path::drop(int x) {
-    if (x >= size()) {
-        clear();
-        return;
+    this->start = n;
+    if (size == 0) {
+        this->end = n;
     }
 
-    points.erase(points.begin(), points.begin() + x);
-    points.shrink_to_fit();
-    if (internalIndex > 0) {
-        internalIndex -= x;
-    }
-};
-
-void Path::clear() {
-    points.clear();
-    internalIndex = 0;
+    size++;
 }
 
-void Path::addPointset(positionSet p) {
-    points.push_back(p);
-};
+void Path::addToEnd(positionSet pose) {
+    PathNode* n = new PathNode();
+    n->path = this;
+    n->pose = pose;
+    n->previous = this->end;
+    n->next = nullptr;
 
-void Path::addPointset(Point2d p, double head, bool inDeg) {
-    if (inDeg) { degToRad(head); }
-    points.push_back({ p, head });
-};
+    this->end = n;
+    if (size == 0) {
+        this->start = n;
+    }
 
+    size++;
+}
 
-double Path::arclength(int start, int end) {
-    int si = size();
-    if (start < 0) {
-        if (abs(start) < si) {
-            start = si + start;
+void Path::addToStart(Path other) {
+    PathNode* n = other.end;
+    while (n) {
+        this->addToStart(n->pose);
+        n = n->previous;
+    }
+}
+
+void Path::addToEnd(Path other) {
+    PathNode* n = other.start;
+    while (n) {
+        this->addToEnd(n->pose);
+        n = n->next;
+    }
+}
+
+void Path::insert(int index, positionSet set) {
+    if (index < 0) {
+        return;
+    }
+    if (index >= this->size) {
+        index = this->size - 1;
+    }
+    PathNode* n = this->start;
+    for (int i = 0; i < index; i++) {
+        n = n->next;
+    }
+    PathNode* newNode = new PathNode();
+    newNode->pose = set;
+    newNode->previous = n;
+    newNode->next = n->next;
+    if (newNode->next) {
+        newNode->next->previous = newNode;
+    }
+    n->next = n;
+    this->size++;
+}
+
+void Path::insert(int index, Path path) {
+    PathNode* other = path.start;
+    while (other) {
+        this->insert(index, other->pose);
+        other = other->next;
+        index++;
+    }
+}
+
+bool Path::removeFromStart(int i) {
+    if (i < 0) {
+        return false;
+    }
+    if (i >= size) {
+        this->removeAll();
+        return true;
+    }
+
+    PathNode* n;
+    this->tryGetFromStart(i, &n); // This will never fail because 0 <= i < size
+    
+    this->start = n->next;
+    while (n) {
+        PathNode* temp = n;
+        n = n->previous;
+        delete temp;
+    }
+
+    size -= i + 1;
+
+    return true;
+}
+
+bool Path::removeFromEnd(int i) {
+    if (i < 0) {
+        return false;
+    }
+    if (i >= size) {
+        this->removeAll();
+        return true;
+    }
+
+    PathNode* n;
+    this->tryGetFromEnd(i, &n); // This will never fail because 0 <= i < size
+    
+    this->end = n->previous;
+    while (n) {
+        PathNode* temp = n;
+        n = n->next;
+        delete temp;
+    }
+
+    size -= i + 1;
+
+    return true;
+}
+
+void Path::removeAll() {
+    PathNode* n = this->start;
+    while (n) {
+        PathNode* temp = n;
+        n = n->next;
+        delete n;
+    }
+    this->start = this->end = nullptr;
+    size = 0;
+}
+
+bool Path::tryGetFromStart(int i, PathNode** out) {
+    *out = nullptr;
+
+    if (i < 0 || i >= size) {
+        return false;
+    }
+
+    PathNode* n = this->start;
+    while (i > 0) {
+        n = n->next;
+        i--;
+    }
+
+    if (!n) {
+        return false;
+    }
+    
+    *out = n;
+    return true;
+}
+
+bool Path::tryGetFromEnd(int i, PathNode** out) {
+    *out = nullptr;
+
+    if (i < 0 || i >= size) {
+        return false;
+    }
+
+    PathNode* n = this->end;
+    while (i > 0) {
+        n = n->previous;
+        i--;
+    }
+    
+    if (!n) {
+        return false;
+    }
+
+    *out = n;
+    return true;
+}
+
+double Path::arclength() {
+    if (size < 2) {
+        return 0;
+    }
+
+    double sum = 0;
+    PathNode* prev = this->start;
+    PathNode* curr = this->start->next;
+    while (curr) {
+        double dx = prev->pose.p.x - curr->pose.p.x;
+        double dy = prev->pose.p.y - curr->pose.p.y;
+        sum += sqrtf((dx * dx) + (dy * dy));
+
+        prev = curr;
+        curr = curr->previous;
+    }
+
+    return sum;
+}
+
+Path Path::subpath(int s, int e) {
+    Path newPath;
+    newPath.start = newPath.end = nullptr;
+    newPath.size = newPath.index = 0;
+    if (size == 0) {
+        return newPath;
+    }
+
+    if (s < 0) {
+        s = 0;
+    }
+    if (e >= size) {
+        e = size - 1;
+    }
+
+    newPath.index = this->index - s;
+
+    PathNode* newStart = this->start; 
+    for (int i = 0; i < s; i++) {
+        if (!newStart->next) {
+            break;
         }
-        else {
-            start = 0;
+        newStart = newStart->next;
+    }
+    
+    PathNode* newEnd = newStart;
+    int count = end - start;
+    for (int i = 0; i < count; i++) {
+        if (!newEnd->next) {
+            break;
         }
+        newEnd = newEnd->next;
+        newPath.size++;
     }
-    if (end < 0) {
-        if (abs(end) < si) {
-            end = si + end;
+
+    newPath.start = newStart;
+    newPath.end = newEnd;
+    newPath.copyNodes();
+
+    return newPath;
+}
+
+void Path::copyNodes() {
+    PathNode* oldNode = this->start;
+    PathNode* prev = nullptr;
+    while (oldNode) {
+        PathNode* n = new PathNode();
+        n->pose = oldNode->pose;
+        n->previous = prev;
+        if (prev) {
+            prev->next = n;
         }
-        else {
-            end = 0;
-        }
+        prev = n;
+        oldNode = oldNode->next;
     }
-    if (start >= si) { start = si - 1; }
-    if (end >= si) { end = si - 1; }
+    
+}
 
-    double result = 0;
-    for (int i = start; i <= end - 1; i++) {
-        result += Vector2d(points[i].p, points[i + 1].p).getMagnitude();
+positionSet Path::next(bool shift = false) {
+    PathNode* node;
+    int i = min(this->index + 1, size - 1);
+    if (!this->tryGetFromStart(i, &node)) {
+        return {};
     }
-    return result;
-};
-
-double Path::arclengthFromIndexTo(int end) {
-    return arclength(internalIndex, end);
-};
-
-void Path::subpath(Path& pathIn, int start, int end) {
-    for (int i = start; i < end; i++) {
-        pathIn.addPointset(get(i));
+    if (shift) {
+        this->index = i;
     }
-};
+    return node->pose;
+}
 
-Path Path::subpath(int start, int end) {
-    Path result;
-    subpath(result, start, end);
-    return result;
-};
-
-positionSet Path::operator [] (int i) {
-    return get(i);
-};
-
-Path& Path::operator + (positionSet& p) {
-    addPointset(p);
-    return *this;
-};
-
-Path& Path::operator + (Path& p) {
-    for (int i = 0; i < p.size(); i++) {
-        addPointset(p[i]);
+positionSet Path::previous(bool shift = false) {
+    PathNode* node;
+    int i = max(this->index - 1, 0);
+    if (!this->tryGetFromStart(i, &node)) {
+        return {};
     }
-    return *this;
-};
-
-std::ostream& operator << (std::ostream& os, Path& p) {
-    os << "{";
-    for (int i = 0; i < p.size() - 1; i++) {
-        os << p.get(i) << ", ";
+    if (shift) {
+        this->index = i;
     }
-    if (p.size() > 0) {
-        os << p.get(-1);
-    }
-    os << "}";
-    return os;
-};
+    return node->pose;
+}
