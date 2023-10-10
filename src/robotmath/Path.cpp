@@ -130,7 +130,7 @@ void Path::removeAll() {
     while (n) {
         PathNode* temp = n;
         n = n->next;
-        delete n;
+        delete temp;
     }
     this->start = this->end = nullptr;
     size = 0;
