@@ -1,4 +1,5 @@
 #include "../../robotmath/Path.h"
+#include <iostream> // TODO: remove
 
 void Path::addToStart(positionSet pose) {
     PathNode* n = new PathNode();
@@ -60,6 +61,7 @@ void Path::insert(int index, positionSet set) {
     PathNode* newNode = new PathNode();
     newNode->pose = set;
     newNode->previous = n;
+    std::cout << "Path::insert > n == null > " << !n << std::endl;
     newNode->next = n->next;
     if (newNode->next) {
         newNode->next->previous = newNode;
@@ -78,26 +80,38 @@ void Path::insert(int index, Path path) {
 }
 
 bool Path::removeFromStart(int i) {
+    std::cout << "Path::removeFromStart(" << i << ")" << std::endl;
     if (i < 0) {
+        std::cout << "Path::removeFromStart > ERR > i < 0" << std::endl;
         return false;
     }
-    if (i >= size) {
+    if (i == 0) {
         this->removeAll();
         return true;
+    }
+    if (size == 0) {
+        std::cout << "Path::removeFromStart > ERR > size == 0" << std::endl;
+        return false;
     }
 
     PathNode* n;
     this->tryGetFromStart(i, &n); // This will never fail because 0 <= i < size
-    
-    this->start = n->next;
+    std::cout << "Path::removeFromStart > n == null > " << !n << std::endl;
+
     while (n) {
         PathNode* temp = n;
-        n = n->previous;
+        n = n->next;
         delete temp;
     }
 
     size -= i + 1;
+    std::cout << "Path::removeFromStart > new size > " << size << std::endl;
 
+    if (size == 1) {
+        this->end = this->start;
+    }
+
+    std::cout << "Path::removeFromStart > SUCCESS!" << std::endl;
     return true;
 }
 
@@ -112,15 +126,22 @@ bool Path::removeFromEnd(int i) {
 
     PathNode* n;
     this->tryGetFromEnd(i, &n); // This will never fail because 0 <= i < size
-    
-    this->end = n->previous;
+    std::cout << "Path::removeFromEnd > n == null > " << !n << std::endl;
+
+    if (i == size - 1) {
+        this->end = n->previous;
+    }
     while (n) {
         PathNode* temp = n;
-        n = n->next;
+        n = n->previous;
         delete temp;
     }
 
     size -= i + 1;
+
+    if (size == 1) {
+        this->start = this->end;
+    }
 
     return true;
 }
@@ -139,18 +160,17 @@ void Path::removeAll() {
 bool Path::tryGetFromStart(int i, PathNode** out) {
     *out = nullptr;
 
-    if (i < 0 || i >= size) {
+    if (i < 0 || i >= size || size == 0) {
         return false;
     }
 
     PathNode* n = this->start;
     while (i > 0) {
         n = n->next;
+        if (!n) {
+            return false;
+        }
         i--;
-    }
-
-    if (!n) {
-        return false;
     }
     
     *out = n;
@@ -167,11 +187,10 @@ bool Path::tryGetFromEnd(int i, PathNode** out) {
     PathNode* n = this->end;
     while (i > 0) {
         n = n->previous;
+        if (!n) {
+            return false;
+        }
         i--;
-    }
-    
-    if (!n) {
-        return false;
     }
 
     *out = n;
@@ -202,7 +221,7 @@ Path Path::subpath(int s, int e) {
     Path newPath;
     newPath.start = newPath.end = nullptr;
     newPath.size = newPath.index = 0;
-    if (size == 0) {
+    if (size == 0 || s >= e || s >= size || e < 0) {
         return newPath;
     }
 
@@ -249,11 +268,13 @@ void Path::copyNodes() {
         n->previous = prev;
         if (prev) {
             prev->next = n;
+        } else {
+            this->start = prev;
         }
         prev = n;
         oldNode = oldNode->next;
     }
-    
+    this->end = prev;
 }
 
 positionSet Path::next(bool shift) {
@@ -265,6 +286,7 @@ positionSet Path::next(bool shift) {
     if (shift) {
         this->index = i;
     }
+    std::cout << "Path::next > n == null > " << !node << std::endl;
     return node->pose;
 }
 
@@ -277,5 +299,6 @@ positionSet Path::previous(bool shift) {
     if (shift) {
         this->index = i;
     }
+    std::cout << "Path::next > n == null > " << !node << std::endl;
     return node->pose;
 }

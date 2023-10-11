@@ -526,6 +526,7 @@ public:
         if (!targetPath.tryGetFromEnd(targetPath.getIndex(), &n)) {
             return {};
         }
+        std::cout << "Navigation::getTarget > n == null > " << !n << std::endl;
         return n->pose;
     }
 
@@ -534,6 +535,7 @@ public:
         if (!targetPath.tryGetFromEnd(targetPath.getIndex() + 1, &n)) {
             return getTarget(); // TODO: determine if this is what we want
         }
+        std::cout << "Navigation::getNextTarget > n == null > " << !n << std::endl;
         return n->pose;
     }
 
