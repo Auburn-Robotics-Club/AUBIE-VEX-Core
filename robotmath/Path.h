@@ -1,27 +1,14 @@
 #pragma once
 #include "Point2d.h"
-
-class Path;
-
-class PathNode {
-public:
-    positionSet pose;
-    Path* path;
-    PathNode* previous;
-    PathNode* next;
-};
+#include <list>
 
 class Path {
 private:
-    PathNode* start;
-    PathNode* end;
-    int size = 0;
-    int index = 0;
-    void copyNodes();
+    std::list<positionSet> points;
+    int index;
+    Path();
 public:
-    PathNode* getStart() { return start; }
-    PathNode* getEnd() { return end; }
-    int getSize() { return size; }
+    int getSize() { return points.size(); }
     int getIndex() { return index; }
 
     void addToStart(positionSet set);
@@ -35,8 +22,8 @@ public:
     bool removeFromEnd(int i);
     void removeAll();
     
-    bool tryGetFromStart(int i, PathNode** output);
-    bool tryGetFromEnd(int i, PathNode** output);
+    bool tryGetFromStart(int i, positionSet* output);
+    bool tryGetFromEnd(int i, positionSet* output);
 
     positionSet next(bool shift = false);
     positionSet previous(bool shift = false);
