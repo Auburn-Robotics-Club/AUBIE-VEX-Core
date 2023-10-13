@@ -447,7 +447,7 @@ public:
 
         //TODO Target management, events, etc
         //Hanndle Tagrte management, calculating arclength, curvature, nextTagrte, target vector, etc; Motion contoller decides when next tagret is, navigation just answers question about the path
-
+        
         if (previousPath.getSize() >= lastPointCap) {
             previousPath.removeFromStart(1);
         }
@@ -522,21 +522,19 @@ public:
     }
 
     positionSet getTarget() {
-        PathNode* n;
-        if (!targetPath.tryGetFromEnd(targetPath.getIndex(), &n)) {
+        positionSet set;
+        if (!targetPath.tryGetFromEnd(targetPath.getIndex(), &set)) {
             return {};
         }
-        std::cout << "Navigation::getTarget > n == null > " << !n << std::endl;
-        return n->pose;
+        return set;
     }
 
     positionSet getNextTarget() {
-        PathNode* n;
-        if (!targetPath.tryGetFromEnd(targetPath.getIndex() + 1, &n)) {
+        positionSet set;
+        if (!targetPath.tryGetFromEnd(targetPath.getIndex() + 1, &set)) {
             return getTarget(); // TODO: determine if this is what we want
         }
-        std::cout << "Navigation::getNextTarget > n == null > " << !n << std::endl;
-        return n->pose;
+        return set;
     }
 
     Path& getPreviousPath() {

@@ -6,8 +6,8 @@ class Path {
 private:
     std::list<positionSet> points;
     int index;
-    Path();
 public:
+    Path();
     int getSize() { return points.size(); }
     int getIndex() { return index; }
 
