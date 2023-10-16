@@ -7,6 +7,7 @@ private:
     Node* prev = nullptr;
 
     friend Node;
+    friend Path;
 
     Node* getHeapCopy(Node n){
         Node* r = new Node();
@@ -18,28 +19,6 @@ private:
 
     Node(){
         data = {Point2d(0, 0), 0};
-    }
-public:
-    positionSet data;
-
-    Node(positionSet pos){
-        data = pos;
-    }
-
-    bool hasNext(){
-        return !(next == nullptr);
-    }
-
-    bool hasPrev(){
-        return !(prev == nullptr);
-    }
-
-    Node* getNext(){
-        return next;
-    }
-
-    Node* getPrev(){
-        return prev;
     }
 
     Node* addBefore(Node N){
@@ -87,14 +66,38 @@ public:
         next = n->next;
         free(n);
     }
+public:
+    positionSet data;
+
+    Node(positionSet pos){
+        data = pos;
+    }
+
+    bool hasNext(){
+        return !(next == nullptr);
+    }
+
+    bool hasPrev(){
+        return !(prev == nullptr);
+    }
+
+    Node* getNext(){
+        return next;
+    }
+
+    Node* getPrev(){
+        return prev;
+    }
 };
 
-class NodeList {
+class Path {
 private:
     Node* front = nullptr;
     Node* rear = nullptr;
 
 public:
+    Path();
+
     void addToStart(positionSet p){
         if(front == nullptr){
             front = new Node(p);
@@ -104,6 +107,7 @@ public:
 
         front = front->addBefore(Node(p));
     };
+
     void addToEnd(positionSet p){
         if(front == nullptr){
             addToStart(p);
@@ -112,20 +116,11 @@ public:
 
         rear = rear->addAfter(Node(p));
     };
-};
 
-class Path {
-private:
-    std::list<positionSet> points;
-    int index;
-public:
-    Path();
     int getSize() { return points.size(); }
     int getIndex() { return index; }
 
-    void addToStart(positionSet set);
     void addToStart(Path otherList);
-    void addToEnd(positionSet set);
     void addToEnd(Path otherList);
     void insert(int index, positionSet set);
     void insert(int index, Path set);
