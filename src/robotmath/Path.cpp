@@ -34,3 +34,37 @@ void Path::addToEnd(Path other) {
         n = n->next;
     }
 }
+
+void Path::insert(int i, positionSet p) {
+    if (i < 0) {
+        return;
+    }
+    Node* n = front;
+    while (n) {
+        if (i == 0) {
+            n->addBefore(Node(p));
+            return;
+        }
+        n = n->next;
+        i--;
+    }
+}
+
+void Path::insert(int i, Path other) {
+    if (i < 0) {
+        return;
+    }
+    Node* n = front;
+    while (n) {
+        if (i == 0) {
+            Node* n2 = other.front;
+            while (n2) {
+                n->addBefore(Node(n2->data));
+                n2 = n2->next;
+            }
+            return;
+        }
+        n = n->next;
+        i--;
+    }
+}
