@@ -68,3 +68,60 @@ void Path::insert(int i, Path other) {
         i--;
     }
 }
+
+bool Path::removeFromStart(int i) {
+    if (i < 0) {
+        return false;
+    }
+
+    Node* n = front;
+    while (n) {
+        if (i == 0) {
+            if (n == front) {
+                front = n->next;
+            }
+            if (n->hasNext()) {
+                n->next->removeBefore();
+            } else { // n == rear must be true here
+                rear = n->prev;
+            }
+            free(n);
+            return true;
+        }
+        n = n->next;
+        i--;
+    }
+    return false;
+}
+
+bool Path::removeFromEnd(int i) {
+    if (i < 0) {
+        return false;
+    }
+    
+    Node* n = rear;
+    while (n) {
+        if (i == 0) {
+            if (n == rear) {
+                rear = n->prev;
+            }
+            if (n->hasPrev()) {
+                n->prev->removeAfter();
+            } else { // n == front must be true here
+                front = n->next;
+            }
+            return true;
+        }
+        n = n->prev;
+        i--;
+    }
+    return false;
+}
+
+void Path::removeAll() {
+    while (front->hasNext()) {
+        front->removeAfter();
+    }
+    free(front);
+    front = rear = nullptr;
+}
