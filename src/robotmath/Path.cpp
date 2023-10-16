@@ -18,3 +18,19 @@ void Path::addToEnd(positionSet p){
 
     rear = rear->addAfter(Node(p));
 }
+
+void Path::addToStart(Path other) {
+    Node* n = other.rear;
+    while (n) {
+        addToStart(n->data);
+        n = n->prev;
+    }
+}
+
+void Path::addToEnd(Path other) {
+    Node* n = other.front;
+    while (n) {
+        addToEnd(n->data);
+        n = n->next;
+    }
+}
