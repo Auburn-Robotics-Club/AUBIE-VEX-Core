@@ -187,3 +187,20 @@ Path Path::subpath(int start, int end) {
 
     return p;
 }
+
+double Path::arclength() {
+    if (!front) {
+        return 0;
+    }
+    double sum = 0;
+    Node* n = front->next;
+    while (n) {
+        double dx = n->data.p.x - n->prev->data.p.x;
+        double dy = n->data.p.y - n->prev->data.p.y;
+
+        sum += sqrtf((dx * dx) + (dy * dy));
+
+        n = n->next;
+    }
+    return sum;
+}
