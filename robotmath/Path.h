@@ -94,9 +94,10 @@ class Path {
 private:
     Node* front = nullptr;
     Node* rear = nullptr;
-
+    int size = 0;
 public:
     Path();
+    int getSize() { return size; }
 
     void addToStart(positionSet p);
     void addToEnd(positionSet p);

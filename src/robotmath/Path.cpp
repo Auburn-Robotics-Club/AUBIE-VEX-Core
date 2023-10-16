@@ -1,6 +1,7 @@
 #include "../../robotmath/Path.h"
 
 void Path::addToStart(positionSet p){
+    size++;
     if(front == nullptr){
         front = new Node(p);
         rear = front;
@@ -11,6 +12,7 @@ void Path::addToStart(positionSet p){
 };
 
 void Path::addToEnd(positionSet p){
+    size++;
     if(front == nullptr){
         addToStart(p);
         return;
@@ -22,6 +24,7 @@ void Path::addToEnd(positionSet p){
 void Path::addToStart(Path other) {
     Node* n = other.rear;
     while (n) {
+        size++;
         addToStart(n->data);
         n = n->prev;
     }
@@ -30,6 +33,7 @@ void Path::addToStart(Path other) {
 void Path::addToEnd(Path other) {
     Node* n = other.front;
     while (n) {
+        size++;
         addToEnd(n->data);
         n = n->next;
     }
@@ -42,6 +46,7 @@ void Path::insert(int i, positionSet p) {
     Node* n = front;
     while (n) {
         if (i == 0) {
+            size++;
             n->addBefore(Node(p));
             return;
         }
@@ -59,6 +64,7 @@ void Path::insert(int i, Path other) {
         if (i == 0) {
             Node* n2 = other.front;
             while (n2) {
+                size++;
                 n->addBefore(Node(n2->data));
                 n2 = n2->next;
             }
@@ -86,6 +92,7 @@ bool Path::removeFromStart(int i) {
                 rear = n->prev;
             }
             free(n);
+            size--;
             return true;
         }
         n = n->next;
@@ -110,6 +117,7 @@ bool Path::removeFromEnd(int i) {
             } else { // n == front must be true here
                 front = n->next;
             }
+            size--;
             return true;
         }
         n = n->prev;
@@ -124,6 +132,7 @@ void Path::removeAll() {
     }
     free(front);
     front = rear = nullptr;
+    size = 0;
 }
 
 bool Path::tryGetFromStart(int i, Node** out) {
@@ -176,8 +185,8 @@ Path Path::subpath(int start, int end) {
 
     Path p = Path();
 
-    int count = end - start + 1;
-    for (int i = 0; i < count; i++) {
+    p.size = end - start + 1;
+    for (int i = 0; i < p.size; i++) {
         if (!n) {
             break;
         }
