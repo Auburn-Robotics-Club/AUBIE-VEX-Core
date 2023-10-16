@@ -125,3 +125,37 @@ void Path::removeAll() {
     free(front);
     front = rear = nullptr;
 }
+
+bool Path::tryGetFromStart(int i, Node** out) {
+    if (i < 0 || !out) {
+        return false;
+    }
+    *out = nullptr;
+    Node* n = front;
+    while (n) {
+        if (i == 0) {
+            *out = n;
+            return true;
+        }
+        n = n->next;
+        i--;
+    }
+    return false;
+}
+
+bool Path::tryGetFromEnd(int i, Node** out) {
+    if (i < 0 || !out) {
+        return false;
+    }
+    *out = nullptr;
+    Node* n = rear;
+    while (n) {
+        if (i == 0) {
+            *out = n;
+            return true;
+        }
+        n = n->prev;
+        i--;
+    }
+    return false;
+}
