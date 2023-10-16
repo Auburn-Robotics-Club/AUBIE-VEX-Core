@@ -98,27 +98,8 @@ private:
 public:
     Path();
 
-    void addToStart(positionSet p){
-        if(front == nullptr){
-            front = new Node(p);
-            rear = front;
-            return;
-        }
-
-        front = front->addBefore(Node(p));
-    };
-
-    void addToEnd(positionSet p){
-        if(front == nullptr){
-            addToStart(p);
-            return;
-        }
-
-        rear = rear->addAfter(Node(p));
-    };
-
-    int getSize() { return points.size(); }
-    int getIndex() { return index; }
+    void addToStart(positionSet p);
+    void addToEnd(positionSet p);
 
     void addToStart(Path otherList);
     void addToEnd(Path otherList);
@@ -129,13 +110,8 @@ public:
     bool removeFromEnd(int i);
     void removeAll();
     
-    bool tryGetFromStart(int i, positionSet* output);
-    bool tryGetFromEnd(int i, positionSet* output);
-
-    positionSet get();
-    positionSet getReference();
-    positionSet next(bool shift = false);
-    positionSet previous(bool shift = false);
+    bool tryGetFromStart(int i, Node** output);
+    bool tryGetFromEnd(int i, Node** output);
     
     Path subpath(int start, int end);
     double arclength();
