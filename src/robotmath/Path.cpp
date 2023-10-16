@@ -159,3 +159,31 @@ bool Path::tryGetFromEnd(int i, Node** out) {
     }
     return false;
 }
+
+Path Path::subpath(int start, int end) {
+    start = max(0, start);
+    if (start > end) {
+        return Path();
+    }
+
+    Node* n = front;
+    for (int i = 0; i < start; i++) {
+        if (!n) {
+            return Path();
+        }
+        n = n->next;
+    }
+
+    Path p = Path();
+
+    int count = end - start + 1;
+    for (int i = 0; i < count; i++) {
+        if (!n) {
+            break;
+        }
+        p.addToEnd(n->data);
+        n = n->next;
+    }
+
+    return p;
+}
