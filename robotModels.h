@@ -35,6 +35,7 @@ public:
     }
 };
 
+//TODO Be able to specifiy in local (current) or grid coordnates
 class CVController : public MotionController {
 public:
     CVController(Vector2d realitiveTargetVelocity, double targetOmega) {
@@ -91,6 +92,8 @@ public:
 
         double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
         double targetHead = Vector2d(1, 0).getAngle(errorV);
+
+        std::cout << "LIN ERROR" << error << ", " << radToDeg(targetHead) << std::endl;
 
         double angularError = 0;
         if(errorV.getMagnitude() > angleUpdateThes){
@@ -156,6 +159,7 @@ public:
         positionSet target = navigation.getTarget();
 
         double error = shortestArcToTarget(location.head, target.head);
+
         switch(direction){
             case 1:
                 if(error < 0){
@@ -171,6 +175,7 @@ public:
 
         realtiveTargetVel = Vector2d(0, 0);
 
+        std::cout << "ROT ERROR" << radToDeg(error) << std::endl;
         if(fabs(error) > thres){
             targetW = error*p + c*sign(error);
         } else {
@@ -208,6 +213,7 @@ public:
     void updateVel(double deltaT){
         if(!isDone()){
             if(turning){
+                std::cout << "TURNING" << std::endl;
                 rotCont->updateVel(deltaT);
                 realtiveTargetVel = rotCont->getVelocity();
                 targetW = rotCont->getAngularVelocity();
@@ -217,6 +223,7 @@ public:
                     linCont->refresh();
                 }
             } else {
+                std::cout << "LIN" << std::endl;
                 linCont->updateVel(deltaT);
                 realtiveTargetVel = linCont->getVelocity();
                 targetW = linCont->getAngularVelocity();
@@ -250,6 +257,75 @@ public:
         linCont->refresh();
     }
 };
+
+//TODO support heading independece option for XDrive type
+class CurvePathController : public MotionController {
+private:
+    double linK;
+    double linC;
+    double rotK;
+    double rotC;
+
+public:
+    CurvePathController(double linearK, double linearC, double rotationalK, double rotationalC){
+        linK = linearK;
+        linC = linearC;
+        rotK = rotationalK;
+        rotC = rotationalC;
+    }
+
+    void updateVel(double deltaT){
+        //Point2d currentPos = navigation.getPosition();
+        //Point2d target = navigation.getTarget();
+        //Point2d nextTarget = navigation.getNextTarget();
+
+
+    }
+    
+    positionSet predictNextPos(double deltaT){
+
+    }
+
+    bool isDone(){
+        
+    }
+
+    void refresh(){
+        
+    }
+};
+/*      if(targetPathIndex < targetPath.size() - 1){
+        double a = error.getMagnitude();
+        double b = getNextGlobalError().getMagnitude();
+        double c = Vector(currentPos.p, nextTarget.p).getMagnitude();
+
+        double q = (a*a + b*b - c*c)/(2*a*b);
+        if(q != 1){
+          double R = c / (2*sqrt(1-q*q));
+          double shiftTheta = 0.5*acos((a*a-2*R*R)/(-2*R*R));
+          shiftTheta = abs(shiftTheta) * -1 * sign(error.getAngle(getNextGlobalError()));
+
+          setCurrentTargetTargetHeading(Vector(1, 0).getAngle(error) + shiftTheta);
+        }else{
+          setCurrentTargetTargetHeading(Vector(1, 0).getAngle(error));
+        }
+      }else{
+        if(error.getMagnitude() > noNewTurnRadius){
+          double targetHead = Vector(1, 0).getAngle(error);
+          if(!forward){
+            targetHead = targetHead + PI;
+            targetHead = normalizeAngle(targetHead);
+          }
+          setCurrentTargetTargetHeading(targetHead);
+        }
+      }
+      
+      //Curve PID
+        angleAdjustSpeed = max(0, 1 - 32.828*abs(hError)*abs(hError)); // TODO Test (+-10  degrees results in  as parabolic)
+        //angleAdjustSpeed = 1 - (2*abs(hError)/PI)*(errorRadius/error.getMagnitude()); // TODO TEST
+        targetVelocity.scale(angleAdjustSpeed);
+      
+      */
 
 //https://wiki.purduesigbots.com/software/control-algorithms/ramsete
 //https://wiki.purduesigbots.com/software/control-algorithms/basic-pure-pursuit

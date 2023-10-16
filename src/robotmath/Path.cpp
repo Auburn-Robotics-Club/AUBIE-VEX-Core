@@ -77,6 +77,14 @@ bool Path::tryGetFromEnd(int i, positionSet* set) {
     return tryGetFromStart(this->getSize() - 1 - i, set);
 }
 
+positionSet Path::get(){
+    positionSet set;
+    if (!tryGetFromStart(this->index, &set)) {
+        return {};
+    }
+    return set;
+}
+
 positionSet Path::next(bool shift) {
     positionSet set;
     if (!tryGetFromStart(this->index + 1, &set)) {

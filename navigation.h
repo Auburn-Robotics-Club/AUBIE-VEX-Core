@@ -460,7 +460,7 @@ public:
     }
 
     void shiftTarget() {
-        targetPath.next();
+        targetPath.next(true);
     }
 
     void addTarget(double x, double y) {
@@ -522,19 +522,11 @@ public:
     }
 
     positionSet getTarget() {
-        positionSet set;
-        if (!targetPath.tryGetFromEnd(targetPath.getIndex(), &set)) {
-            return {};
-        }
-        return set;
+        return targetPath.get();
     }
 
     positionSet getNextTarget() {
-        positionSet set;
-        if (!targetPath.tryGetFromEnd(targetPath.getIndex() + 1, &set)) {
-            return getTarget(); // TODO: determine if this is what we want
-        }
-        return set;
+        return targetPath.next();
     }
 
     Path& getPreviousPath() {
