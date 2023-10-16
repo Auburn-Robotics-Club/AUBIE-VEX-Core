@@ -100,9 +100,9 @@ public:
 
     void addToStart(positionSet p);
     void addToEnd(positionSet p);
-
     void addToStart(Path otherList);
     void addToEnd(Path otherList);
+    
     void insert(int index, positionSet set);
     void insert(int index, Path set);
 
