@@ -87,7 +87,7 @@ public:
 
     void updateVel(double deltaT) {
         positionSet location = navigation.getPosition();
-        positionSet target = navigation.getTarget();
+        positionSet target = navigation.getTarget()->data;
         Vector2d errorV = Vector2d(location.p, target.p);
 
         double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
@@ -111,6 +111,7 @@ public:
                 speed = linK*error + linC*sign(error); 
             }
         }
+ 
         realtiveTargetVel = Vector2d(0, speed);
 
         //Angular speed
@@ -128,10 +129,10 @@ public:
     bool isDone() {
         //IF no next targets or if next target when shifting reset timeouts (prob handle in diff function)
         positionSet location = navigation.getPosition();
-        positionSet target = navigation.getTarget(); //TODO What happens if target list is empty? - 
+        positionSet target = navigation.getTarget()->data; //TODO What happens if target list is empty? - 
         Vector2d errorV = Vector2d(location.p, target.p);
 
-        return (navigation.isLinearStopped() && navigation.isRotationalStopped() && (errorV.getMagnitude() < linThres));
+        return (navigation.isLinearStopped() && navigation.isRotationalStopped() && (errorV.dot(navigation.getRobotNormalVector()) < linThres));
     }
 
     void refresh(){};
@@ -157,7 +158,7 @@ public:
 
     double determineError() {
         positionSet location = navigation.getPosition();
-        positionSet target = navigation.getTarget();
+        positionSet target = navigation.getTarget()->data;
 
         double error = shortestArcToTarget(location.head, target.head);
 
@@ -215,6 +216,11 @@ public:
     void updateVel(double deltaT){
         if(!isDone()){
             if(turning){
+                NodePS* t = navigation.getTarget();
+                double newHead = Vector2d(1, 0).getAngle(Vector2d(navigation.getPosition().p, t->data.p));
+                t->data.head = newHead;
+                //std::cout << radToDeg(t->data.head) << std::endl;
+
                 rotCont->updateVel(deltaT);
                 realtiveTargetVel = rotCont->getVelocity();
                 targetW = rotCont->getAngularVelocity();

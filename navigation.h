@@ -515,8 +515,8 @@ public:
         currentNode = targetList.getFront();
     }
 
-    positionSet getTarget() {
-        return currentNode->data;
+    NodePS* getTarget() {
+        return currentNode;
     }
 
     void shiftTarget() {

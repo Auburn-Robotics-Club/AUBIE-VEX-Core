@@ -84,6 +84,7 @@ public:
     void addTarget(Vector2d in);
     void addRelTarget(Vector2d in);
     void addRelTarget(double heading, bool inDeg = true);
+    void appendPath(Path a);
     int getSize();
     double arclength();
     NodePS* getFront();

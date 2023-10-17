@@ -339,6 +339,10 @@ void TargetPath::addRelTarget(double heading, bool inDeg) {
     addToEnd({ getRear()->data.p, normalizeAngle(getRear()->data.head + heading) });
 }
 
+void TargetPath::appendPath(Path a) {
+    Path::addToEnd(a);
+}
+
 int TargetPath::getSize() {
     return Path::getSize();
 }

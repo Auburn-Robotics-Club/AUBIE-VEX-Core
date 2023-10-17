@@ -36,7 +36,7 @@ Path generateCurve(Point2d start, Vector2d end, Vector2d v1, bool includeC1 = fa
 Path generateCurve(Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1 = false, int steps = 10);
 Path generateCurve(Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1 = false, int steps = 10);
 
-Path curveHeadings(std::vector<Point2d>& points);
+void curveHeadings(Path points);
 
 std::ostream& operator << (std::ostream& os, positionSet p);
 bool operator==(const positionSet& a, const positionSet& b);

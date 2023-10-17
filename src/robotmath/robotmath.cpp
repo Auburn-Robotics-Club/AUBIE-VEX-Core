@@ -76,8 +76,8 @@ Path generateCurve(Point2d start, Point2d end, std::vector<Point2d>& controlPoin
     return results;
 };
 
-std::vector<Point2d> generateCurve(Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1, int steps) {
-    std::vector<Point2d> results;
+Path generateCurve(Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1, int steps) {
+    Path results;
     if (controlVectors.size() > 0) {
         if (controlVectors.size() > 1) {
             std::vector<Point2d> endpoints;
@@ -97,7 +97,7 @@ std::vector<Point2d> generateCurve(Point2d start, Vector2d end, std::vector<Vect
                     c1 = Point2d(c1.x * 2 - (A.x + B.x) / 2, c1.y * 2 - (A.y + B.y) / 2);
                 }
                 for (double t = 0; t <= 1; t = t + tStep) {
-                    results.push_back(bezierFormula(A, B, c1, t));
+                    results.addToEnd({ bezierFormula(A, B, c1, t), 0 });
                 }
             }
         }
@@ -108,82 +108,17 @@ std::vector<Point2d> generateCurve(Point2d start, Vector2d end, std::vector<Vect
     return results;
 };
 
-void generateCurve(std::vector<Point2d>& points, Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1, int steps) {
-    if (controlPoints.size() > 0) {
-        if (controlPoints.size() > 1) {
-            std::vector<Point2d> endpoints;
-            endpoints.push_back(start);
-            for (int i = 0; i < controlPoints.size() - 1; i++) {
-                endpoints.push_back(midpoint(controlPoints[i], controlPoints[i + 1]));
-            }
-            endpoints.push_back(end);
-
-            double tStep = 1.0 / steps;
-            double headTarget = 0;
-            for (int i = 0; i < endpoints.size() - 1; i++) {
-                Point2d A = endpoints[i];
-                Point2d B = endpoints[i + 1];
-                Point2d c1 = controlPoints[i];
-                if (includeC1) {
-                    c1 = Point2d(c1.x * 2 - (A.x + B.x) / 2, c1.y * 2 - (A.y + B.y) / 2);
-                }
-                for (double t = 0; t <= 1; t = t + tStep) {
-                    points.push_back(bezierFormula(A, B, c1, t));
-                }
-            }
-        }
-        else {
-            generateCurve(points, start, end, controlPoints[0], includeC1, steps);
-        }
-    }
-};
-
-void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1, int steps) {
-    if (controlVectors.size() > 0) {
-        if (controlVectors.size() > 1) {
-            std::vector<Point2d> endpoints;
-            endpoints.push_back(start);
-            for (int i = 0; i < controlVectors.size() - 1; i++) {
-                endpoints.push_back(midpoint(controlVectors[i] + start, controlVectors[i + 1] + start));
-            }
-            endpoints.push_back(end + start);
-
-            double tStep = 1.0 / steps;
-            double headTarget = 0;
-            for (int i = 0; i < endpoints.size() - 1; i++) {
-                Point2d A = endpoints[i];
-                Point2d B = endpoints[i + 1];
-                Point2d c1 = controlVectors[i] + start;
-                if (includeC1) {
-                    c1 = Point2d(c1.x * 2 - (A.x + B.x) / 2, c1.y * 2 - (A.y + B.y) / 2);
-                }
-                for (double t = 0; t <= 1; t = t + tStep) {
-                    points.push_back(bezierFormula(A, B, c1, t));
-                }
-            }
-        }
-        else {
-            generateCurve(points, start, end, controlVectors[0], includeC1, steps);
-        }
-    }
-};
-
-std::vector<positionSet> curveHeadings(std::vector<Point2d>& points) {
-    std::vector<positionSet> results;
-    curveHeadings(results, points);
-    return results;
-};
-
-void curveHeadings(std::vector<positionSet>& posSet, std::vector<Point2d>& points) {
+void curveHeadings(Path points) {
     double head = 0;
-    const int pSize = points.size();
-    for (int i = 0; i < pSize; i++) {
-        Point2d A = points[i];
-        if (i < pSize - 1) {
-            Point2d B = points[i + 1];
+    NodePS* n = points.getFront();
+
+    while (n != nullptr) {
+        Point2d A = n->data.p;
+        if (n->hasNext()) {
+            Point2d B = n->getNext()->data.p;
             head = normalizeAngle(atan2(B.y - A.y, B.x - A.x));
         }
-        posSet.push_back({ A, head });
+        n->data.head = head;
     }
 };
 
