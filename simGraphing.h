@@ -89,11 +89,14 @@ void quiver(simulator::FieldGraph& graph, std::vector <positionSet>& p, sf::Colo
 };
 
 void plot(simulator::FieldGraph& graph, Path& path, sf::Color color) {
-	plot(graph, path.getList(), color);
+	std::vector<positionSet> a = path.getList();
+	plot(graph, a, color);
 };
 void scatter(simulator::FieldGraph& graph, Path& path, sf::Color color) {
-	scatter(graph, path.getList(), color);
+	std::vector<positionSet> a = path.getList();
+	scatter(graph, a, color);
 };
 void quiver(simulator::FieldGraph& graph, Path& path, sf::Color color, double mag) {
-	quiver(graph, path.getList(), color, mag);
+	std::vector<positionSet> a = path.getList();
+	quiver(graph, a, color, mag);
 };

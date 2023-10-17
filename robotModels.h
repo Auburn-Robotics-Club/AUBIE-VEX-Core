@@ -93,7 +93,8 @@ public:
         double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
         double targetHead = Vector2d(1, 0).getAngle(errorV);
 
-        std::cout << "LIN ERROR" << error << ", " << radToDeg(targetHead) << std::endl;
+        //std::cout << "LIN ERROR" << error << ", " << radToDeg(targetHead) << std::endl;
+        //std::cout << target.p << std::endl;
 
         double angularError = 0;
         if(errorV.getMagnitude() > angleUpdateThes){
@@ -154,28 +155,33 @@ public:
         direction = clamp(d, 0, 2);
     }
 
-    void updateVel(double deltaT) {
+    double determineError() {
         positionSet location = navigation.getPosition();
         positionSet target = navigation.getTarget();
 
         double error = shortestArcToTarget(location.head, target.head);
 
-        switch(direction){
-            case 1:
-                if(error < 0){
-                    error = M_2PI + error;
-                }
+        switch (direction) {
+        case 1:
+            if (error < 0) {
+                error = M_2PI + error;
+            }
             break;
-            case 2:
-                if(error > 0){
-                    error = M_2PI - error;
-                }
+        case 2:
+            if (error > 0) {
+                error =  error - M_2PI;
+            }
             break;
         }
 
+        return error;
+    }
+
+    void updateVel(double deltaT) {
+        double error = determineError();
+
         realtiveTargetVel = Vector2d(0, 0);
 
-        std::cout << "ROT ERROR" << radToDeg(error) << std::endl;
         if(fabs(error) > thres){
             targetW = error*p + c*sign(error);
         } else {
@@ -184,11 +190,7 @@ public:
     }
      
     bool isDone() {
-        //IF no next targets or if next target when shifting reset timeouts (prob handle in diff function)
-        positionSet location = navigation.getPosition();
-        positionSet target = navigation.getTarget(); //TODO What happens if target list is empty? - 
-        double error = shortestArcToTarget(location.head, target.head);
-
+        double error = determineError();
         return (navigation.isRotationalStopped() && (abs(error) < thres));
     }
     
@@ -213,7 +215,6 @@ public:
     void updateVel(double deltaT){
         if(!isDone()){
             if(turning){
-                std::cout << "TURNING" << std::endl;
                 rotCont->updateVel(deltaT);
                 realtiveTargetVel = rotCont->getVelocity();
                 targetW = rotCont->getAngularVelocity();
@@ -223,7 +224,6 @@ public:
                     linCont->refresh();
                 }
             } else {
-                std::cout << "LIN" << std::endl;
                 linCont->updateVel(deltaT);
                 realtiveTargetVel = linCont->getVelocity();
                 targetW = linCont->getAngularVelocity();
@@ -249,7 +249,7 @@ public:
     }
 
     bool isDone(){
-        return !(navigation.getTargetIndex() < navigation.getTargetSize());
+        return navigation.pointingToLastTarget() && !turning && linCont->isDone();
     }
 
     void refresh(){

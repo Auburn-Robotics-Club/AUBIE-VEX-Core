@@ -1,28 +1,28 @@
 #include "../../robotmath/Path.h"
 
-void Path::addToStart(positionSet p){
+void Path::addToStart(positionSet p) {
     size++;
-    if(front == nullptr){
-        front = new Node(p);
+    if (front == nullptr) {
+        front = new NodePS(p);
         rear = front;
         return;
     }
 
-    front = front->addBefore(Node(p));
+    front = front->addBefore(NodePS(p));
 };
 
-void Path::addToEnd(positionSet p){
+void Path::addToEnd(positionSet p) {
     size++;
-    if(front == nullptr){
+    if (front == nullptr) {
         addToStart(p);
         return;
     }
 
-    rear = rear->addAfter(Node(p));
+    rear = rear->addAfter(NodePS(p));
 }
 
 void Path::addToStart(Path other) {
-    Node* n = other.rear;
+    NodePS* n = other.rear;
     while (n) {
         size++;
         addToStart(n->data);
@@ -31,7 +31,7 @@ void Path::addToStart(Path other) {
 }
 
 void Path::addToEnd(Path other) {
-    Node* n = other.front;
+    NodePS* n = other.front;
     while (n) {
         size++;
         addToEnd(n->data);
@@ -43,11 +43,11 @@ void Path::insert(int i, positionSet p) {
     if (i < 0) {
         return;
     }
-    Node* n = front;
+    NodePS* n = front;
     while (n) {
         if (i == 0) {
             size++;
-            n->addBefore(Node(p));
+            n->addBefore(NodePS(p));
             return;
         }
         n = n->next;
@@ -59,13 +59,13 @@ void Path::insert(int i, Path other) {
     if (i < 0) {
         return;
     }
-    Node* n = front;
+    NodePS* n = front;
     while (n) {
         if (i == 0) {
-            Node* n2 = other.front;
+            NodePS* n2 = other.front;
             while (n2) {
                 size++;
-                n->addBefore(Node(n2->data));
+                n->addBefore(NodePS(n2->data));
                 n2 = n2->next;
             }
             return;
@@ -80,7 +80,7 @@ bool Path::removeFromStart(int i) {
         return false;
     }
 
-    Node* n = front;
+    NodePS* n = front;
     while (n) {
         if (i == 0) {
             if (n == front) {
@@ -88,7 +88,8 @@ bool Path::removeFromStart(int i) {
             }
             if (n->hasNext()) {
                 n->next->removeBefore();
-            } else { // n == rear must be true here
+            }
+            else { // n == rear must be true here
                 rear = n->prev;
             }
             free(n);
@@ -105,8 +106,8 @@ bool Path::removeFromEnd(int i) {
     if (i < 0) {
         return false;
     }
-    
-    Node* n = rear;
+
+    NodePS* n = rear;
     while (n) {
         if (i == 0) {
             if (n == rear) {
@@ -114,7 +115,8 @@ bool Path::removeFromEnd(int i) {
             }
             if (n->hasPrev()) {
                 n->prev->removeAfter();
-            } else { // n == front must be true here
+            }
+            else { // n == front must be true here
                 front = n->next;
             }
             size--;
@@ -135,38 +137,34 @@ void Path::removeAll() {
     size = 0;
 }
 
-bool Path::tryGetFromStart(int i, Node** out) {
-    if (i < 0 || !out) {
-        return false;
+NodePS* Path::tryGetFromStart(int i) {
+    if (i < 0) {
+        return nullptr;
     }
-    *out = nullptr;
-    Node* n = front;
+    NodePS* n = front;
     while (n) {
         if (i == 0) {
-            *out = n;
-            return true;
+            return n;
         }
         n = n->next;
         i--;
     }
-    return false;
+    return nullptr;
 }
 
-bool Path::tryGetFromEnd(int i, Node** out) {
-    if (i < 0 || !out) {
-        return false;
+NodePS* Path::tryGetFromEnd(int i) {
+    if (i < 0) {
+        return nullptr;
     }
-    *out = nullptr;
-    Node* n = rear;
-    while (n) {
+    NodePS* n = rear;
+    while (n != nullptr) {
         if (i == 0) {
-            *out = n;
-            return true;
+            return n;
         }
         n = n->prev;
         i--;
     }
-    return false;
+    return nullptr;
 }
 
 Path Path::subpath(int start, int end) {
@@ -175,7 +173,7 @@ Path Path::subpath(int start, int end) {
         return Path();
     }
 
-    Node* n = front;
+    NodePS* n = front;
     for (int i = 0; i < start; i++) {
         if (!n) {
             return Path();
@@ -202,7 +200,7 @@ double Path::arclength() {
         return 0;
     }
     double sum = 0;
-    Node* n = front->next;
+    NodePS* n = front->next;
     while (n) {
         double dx = n->data.p.x - n->prev->data.p.x;
         double dy = n->data.p.y - n->prev->data.p.y;

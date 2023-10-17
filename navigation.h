@@ -351,7 +351,7 @@ private:
     double angularAcceleration = 0;
 
     int lastPointCap = 3;
-    Path previousPath; //TODO - Add timing component incase loops become inconsistant?
+    //Path previousPath; //TODO - Add timing component incase loops become inconsistant?
 
     void updateStopTime(double deltaTime) {
         //Linear
@@ -385,10 +385,13 @@ private:
         }
     }
 
+    TargetPath targetList = TargetPath(currentPos);
+    NodePS* currentNode;
 public:
     Navigator() {
         //stopRadius needs to be init
         //Starting pos needs to be init
+        newTargetList(targetList);
     }
 
     //Set starting Position
@@ -397,6 +400,7 @@ public:
         setHead(currentHeading, currentHeadingInDeg);
         previousPos = currentPos;
         lastStoppedPos = currentPos;
+        newTargetList(TargetPath(currentPos));
     }
 
     void setStartingPos(startingPosition pos) {
@@ -430,7 +434,7 @@ public:
 
     //Update based on currentPosition and time
     void updateNavigation(double deltaTime) {
-        double inverseDeltaTime = 1 / deltaTime;
+        double inverseDeltaTime = 1.0 / deltaTime;
 
         Vector2d newVel = (currentPos.p - previousPos.p).scale(inverseDeltaTime);
         acceleration = (newVel - velocity).scale(inverseDeltaTime);
@@ -445,10 +449,10 @@ public:
         //TODO Target management, events, etc
         //Hanndle Tagrte management, calculating arclength, curvature, nextTagrte, target vector, etc; Motion contoller decides when next tagret is, navigation just answers question about the path
         
-        if (previousPath.getSize() >= lastPointCap) {
-            previousPath.removeFromStart(1);
-        }
-        previousPath.addToEnd(currentPos);
+        //if (previousPath.getSize() >= lastPointCap) {
+        //    previousPath.removeFromStart(1);
+        //}
+        //previousPath.addToEnd(currentPos);
         previousPos = currentPos;
     }
 
@@ -501,6 +505,28 @@ public:
         double a = getVelocity().getUnitVector().cross(getAcceleration());
         if (abs(a) < 0.0001) { return 0; }
         return (v * v / a);
+    }
+
+
+    //TO BE REMOVED OR CHANGED
+
+    void newTargetList(TargetPath path) {
+        targetList = path;
+        currentNode = targetList.getFront();
+    }
+
+    positionSet getTarget() {
+        return currentNode->data;
+    }
+
+    void shiftTarget() {
+        if (currentNode->hasNext()) {
+            currentNode = currentNode->getNext();
+        }
+    }
+
+    bool pointingToLastTarget() {
+        return currentNode == targetList.getRear();
     }
 };
 
