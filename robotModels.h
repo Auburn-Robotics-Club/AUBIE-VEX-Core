@@ -70,7 +70,7 @@ public:
     bool fwd = true;
 
     FeedForwardDriveController(double linearK, double linearC, double angularK, double angularC, 
-                          double linearThreshold=1, double motionAngularLimit=degToRad(20), double noAngleUpdateThreshold=5, double turnAngularThreshold=degToRad(2)) {
+                          double linearThreshold=1, double motionAngularLimit=degToRad(7), double noAngleUpdateThreshold=5.0, double turnAngularThreshold=degToRad(2)) {
         linK = linearK;
         linC = linearC;
         angK = angularK;
@@ -104,22 +104,24 @@ public:
                 angularError = shortestArcToTarget(location.head, targetHead + M_PI);
             }
         }
-
-        double speed = 0;
-        if(fabs(error) > linThres) { 
-            if (fabs(angularError) < motionAngularCone){
-                speed = linK*error + linC*sign(error); 
-            }
-        }
- 
-        realtiveTargetVel = Vector2d(0, speed);
-
+        
         //Angular speed
         if(fabs(angularError) > angThres){
             targetW = angularError*angK + angC*sign(angularError);
         } else {
             targetW = 0;
         }
+
+        double speed = 0;
+        if(fabs(error) > linThres) { 
+            if (fabs(angularError) < motionAngularCone){
+                speed = linK*error + linC*sign(error); 
+            } else {
+                std::cout << radToDeg(angularError) << std::endl;
+            }
+        }
+ 
+        realtiveTargetVel = Vector2d(0, speed);
     }
 
     positionSet predictNextPos(double deltaT) {
@@ -219,7 +221,6 @@ public:
                 NodePS* t = navigation.getTarget();
                 double newHead = Vector2d(1, 0).getAngle(Vector2d(navigation.getPosition().p, t->data.p));
                 t->data.head = newHead;
-                //std::cout << radToDeg(t->data.head) << std::endl;
 
                 rotCont->updateVel(deltaT);
                 realtiveTargetVel = rotCont->getVelocity();
