@@ -1,5 +1,83 @@
 #include "../../robotmath/Path.h"
 
+NodePS* NodePS::getHeapCopy(NodePS n) {
+    NodePS* r = new NodePS();
+    r->next = n.next;
+    r->prev = n.prev;
+    r->data = n.data;
+    return r;
+}
+
+NodePS::NodePS() {
+    data = { Point2d(0, 0), 0 };
+}
+
+NodePS* NodePS::addBefore(NodePS N) {
+    NodePS* n = getHeapCopy(N);
+    n->prev = prev;
+    n->next = this;
+    if (hasPrev()) {
+        prev->next = n;
+    }
+    prev = n;
+    return n;
+}
+
+NodePS* NodePS::addAfter(NodePS N) {
+    NodePS* n = getHeapCopy(N);
+    n->prev = this;
+    n->next = next;
+    if (hasNext()) {
+        next->prev = n;
+    }
+    next = n;
+    return n;
+}
+
+void NodePS::removeBefore() {
+    if (!hasPrev()) {
+        return;
+    }
+    NodePS* p = prev;
+    if (prev->hasPrev()) {
+        p->prev->next = this;
+    }
+    prev = p->prev;
+    free(p);
+}
+
+void NodePS::removeAfter() {
+    if (!hasNext()) {
+        return;
+    }
+    NodePS* n = next;
+    if (n->hasNext()) {
+        n->next->prev = this;
+    }
+    next = n->next;
+    free(n);
+}
+
+NodePS::NodePS(positionSet pos) {
+    data = pos;
+}
+
+bool NodePS::hasNext() {
+    return !(next == nullptr);
+}
+
+bool NodePS::hasPrev() {
+    return !(prev == nullptr);
+}
+
+NodePS* NodePS::getNext() {
+    return next;
+}
+
+NodePS* NodePS::getPrev() {
+    return prev;
+}
+
 void Path::addToStart(positionSet p) {
     size++;
     if (front == nullptr) {
@@ -210,4 +288,73 @@ double Path::arclength() {
         n = n->next;
     }
     return sum;
+}
+
+NodePS* Path::getFront() {
+    return front;
+};
+
+NodePS* Path::getRear() {
+    return rear;
+};
+
+//Pass in either intended start of path or current robot position
+TargetPath::TargetPath(positionSet initalPos) {
+    addToStart(initalPos);
+}
+
+void TargetPath::addTarget(double x, double y) {
+    Point2d p = Point2d(x, y);
+    addToEnd({ p, normalizeAngle(Vector2d(1, 0).getAngle(Vector2d(getRear()->data.p, p))) });
+}
+
+void TargetPath::addTarget(double heading, bool inDeg) {
+    if (inDeg) { heading = degToRad(heading); }
+    heading = normalizeAngle(heading);
+    addToEnd({ getRear()->data.p, heading });
+}
+
+void TargetPath::addTarget(double x, double y, double heading, bool inDeg) {
+    if (inDeg) { heading = degToRad(heading); };
+    addToEnd({ Point2d(x, y), heading });
+}
+
+void TargetPath::addTarget(positionSet in, bool inDeg) {
+    if (inDeg) { in.head = degToRad(in.head); }
+    in.head = normalizeAngle(in.head);
+    addToEnd(in);
+}
+
+void TargetPath::addTarget(Vector2d in) {
+    addTarget(getRear()->data.p.x + in.getX(), getRear()->data.p.y + in.getY());
+}
+
+void TargetPath::addRelTarget(Vector2d in) {
+    in = in.getRotatedVector(normalizeAngle(getRear()->data.head) - M_PI_2);
+    addTarget(getRear()->data.p.x + in.getX(), getRear()->data.p.y + in.getY());
+}
+
+void TargetPath::addRelTarget(double heading, bool inDeg) {
+    if (inDeg) { heading = degToRad(heading); }
+    addToEnd({ getRear()->data.p, normalizeAngle(getRear()->data.head + heading) });
+}
+
+int TargetPath::getSize() {
+    return Path::getSize();
+}
+
+double TargetPath::arclength() {
+    return Path::arclength();
+}
+
+NodePS* TargetPath::getFront() {
+    return Path::getFront();
+}
+
+NodePS* TargetPath::getRear() {
+    return Path::getRear();
+}
+
+std::vector<positionSet> TargetPath::getList() {
+    return Path::getList();
 }

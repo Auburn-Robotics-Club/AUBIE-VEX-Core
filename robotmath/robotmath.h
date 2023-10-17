@@ -30,18 +30,13 @@ Point2d bezierFormula(Point2d initPoint, Point2d finalPoint, Point2d C1, double 
 
 //Bezier Path using control points
 //Recommended to use pass by reference functions rather than returns to save memory
-std::vector<Point2d> generateCurve(Point2d start, Point2d end, Point2d c1, bool includeC1 = false, int steps = 10);
-std::vector<Point2d> generateCurve(Point2d start, Vector2d end, Vector2d v1, bool includeC1 = false, int steps = 10);
-void generateCurve(std::vector<Point2d>& points, Point2d start, Point2d end, Point2d c1, bool includeC1 = false, int steps = 10);
-void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, Vector2d v1, bool includeC1 = false, int steps = 10);
+Path generateCurve(Point2d start, Point2d end, Point2d c1, bool includeC1 = false, int steps = 10);
+Path generateCurve(Point2d start, Vector2d end, Vector2d v1, bool includeC1 = false, int steps = 10);
 
-std::vector<Point2d> generateCurve(Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1 = false, int steps = 10);
-std::vector<Point2d> generateCurve(Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1 = false, int steps = 10);
-void generateCurve(std::vector<Point2d>& points, Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1 = false, int steps = 10);
-void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1 = false, int steps = 10);
+Path generateCurve(Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1 = false, int steps = 10);
+Path generateCurve(Point2d start, Vector2d end, std::vector<Vector2d>& controlVectors, bool includeC1 = false, int steps = 10);
 
-std::vector<positionSet> curveHeadings(std::vector<Point2d>& points);
-void curveHeadings(std::vector<positionSet>& posSet, std::vector<Point2d>& points);
+Path curveHeadings(std::vector<Point2d>& points);
 
 std::ostream& operator << (std::ostream& os, positionSet p);
 bool operator==(const positionSet& a, const positionSet& b);

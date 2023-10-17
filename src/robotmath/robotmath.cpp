@@ -27,40 +27,25 @@ Point2d bezierFormula(Point2d initPoint, Point2d finalPoint, Point2d C1, double 
     return Point2d(x, y);
 }
 
-std::vector<Point2d> generateCurve(Point2d start, Point2d end, Point2d c1, bool includeC1, int steps) {
+Path generateCurve(Point2d start, Point2d end, Point2d c1, bool includeC1, int steps) {
     if (includeC1) {
         c1 = Point2d(c1.x * 2 - (start.x + end.x) / 2, c1.y * 2 - (start.y + end.y) / 2);
     }
-    std::vector<Point2d> results;
+    Path results;
     double tStep = 1.0 / steps;
     double headTarget = 0;
     for (double t = 0; t <= 1; t = t + tStep) {
-        results.push_back(bezierFormula(start, end, c1, t));
+        results.addToEnd({ bezierFormula(start, end, c1, t), 0 });
     }
     return results;
 };
 
-std::vector<Point2d> generateCurve(Point2d start, Vector2d end, Vector2d v1, bool includeC1, int steps) {
+Path generateCurve(Point2d start, Vector2d end, Vector2d v1, bool includeC1, int steps) {
     return generateCurve(start, end + start, v1 + start, includeC1, steps);
 };
 
-void generateCurve(std::vector<Point2d>& points, Point2d start, Point2d end, Point2d c1, bool includeC1, int steps) {
-    if (includeC1) {
-        c1 = Point2d(c1.x * 2 - (start.x + end.x) / 2, c1.y * 2 - (start.y + end.y) / 2);
-    }
-    double tStep = 1.0 / steps;
-    double headTarget = 0;
-    for (double t = 0; t <= 1; t = t + tStep) {
-        points.push_back(bezierFormula(start, end, c1, t));
-    }
-};
-
-void generateCurve(std::vector<Point2d>& points, Point2d start, Vector2d end, Vector2d v1, bool includeC1, int steps) {
-    return generateCurve(points, start, end + start, v1 + start, includeC1, steps);
-};
-
-std::vector<Point2d> generateCurve(Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1, int steps) {
-    std::vector<Point2d> results;
+Path generateCurve(Point2d start, Point2d end, std::vector<Point2d>& controlPoints, bool includeC1, int steps) {
+    Path results;
     if (controlPoints.size() > 0) {
         if (controlPoints.size() > 1) {
             std::vector<Point2d> endpoints;
@@ -80,7 +65,7 @@ std::vector<Point2d> generateCurve(Point2d start, Point2d end, std::vector<Point
                     c1 = Point2d(c1.x * 2 - (A.x + B.x) / 2, c1.y * 2 - (A.y + B.y) / 2);
                 }
                 for (double t = 0; t <= 1; t = t + tStep) {
-                    results.push_back(bezierFormula(A, B, c1, t));
+                    results.addToEnd({ bezierFormula(A, B, c1, t) });
                 }
             }
         }

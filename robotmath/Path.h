@@ -10,85 +10,22 @@ private:
     friend class Node;
     friend class Path;
 
-    NodePS* getHeapCopy(NodePS n){
-        NodePS* r = new NodePS();
-        r->next = n.next;
-        r->prev = n.prev;
-        r->data = n.data;
-        return r;
-    }
+    NodePS* getHeapCopy(NodePS n);
 
-    NodePS(){
-        data = {Point2d(0, 0), 0};
-    }
+    NodePS();
 
-    NodePS* addBefore(NodePS N){
-        NodePS* n = getHeapCopy(N);
-        n->prev = prev;
-        n->next = this;
-        if(hasPrev()){
-            prev->next = n;
-        }
-        prev = n;
-        return n;
-    }
-
-    NodePS* addAfter(NodePS N){
-        NodePS* n = getHeapCopy(N);
-        n->prev = this;
-        n->next = next;
-        if(hasNext()){
-            next->prev = n;
-        }
-        next = n;
-        return n;
-    }
-
-    void removeBefore(){
-        if(!hasPrev()){
-            return;
-        }
-        NodePS* p = prev;
-        if(prev->hasPrev()){
-            p->prev->next = this;
-        }
-        prev = p->prev;
-        free(p);
-    }
-
-    void removeAfter(){
-        if(!hasNext()){
-            return;
-        }
-        NodePS* n = next;
-        if(n->hasNext()){
-            n->next->prev = this;
-        }
-        next = n->next;
-        free(n);
-    }
+    NodePS* addBefore(NodePS N);
+    NodePS* addAfter(NodePS N);
+    void removeBefore();
+    void removeAfter();
 public:
     positionSet data;
 
-    NodePS(positionSet pos){
-        data = pos;
-    }
-
-    bool hasNext(){
-        return !(next == nullptr);
-    }
-
-    bool hasPrev(){
-        return !(prev == nullptr);
-    }
-
-    NodePS* getNext(){
-        return next;
-    }
-
-    NodePS* getPrev(){
-        return prev;
-    }
+    NodePS(positionSet pos);
+    bool hasNext();
+    bool hasPrev();
+    NodePS* getNext();
+    NodePS* getPrev();
 };
 
 class Path {
@@ -99,6 +36,7 @@ private:
 
 public:
     Path() {};
+
     int getSize() { return size; }
 
     void addToStart(positionSet p);
@@ -119,12 +57,8 @@ public:
     Path subpath(int start, int end);
     double arclength();
 
-    NodePS* getFront() {
-        return front;
-    };
-    NodePS* getRear() {
-        return rear;
-    };
+    NodePS* getFront();
+    NodePS* getRear();
 
     //DEPRECATED!!! SIMULATOR USE ONLY
     std::vector<positionSet> getList() {
@@ -142,63 +76,17 @@ public:
 class TargetPath : private Path {
 public:
     //Pass in either intended start of path or current robot position
-    TargetPath(positionSet initalPos){
-        addToStart(initalPos);
-    }
-
-    void addTarget(double x, double y) {
-        Point2d p = Point2d(x, y);
-        addToEnd({ p, normalizeAngle(Vector2d(1, 0).getAngle(Vector2d(getRear()->data.p, p))) });
-    }
-
-    void addTarget(double heading, bool inDeg = true) {
-        if (inDeg) { heading = degToRad(heading); }
-        heading = normalizeAngle(heading);
-        addToEnd({ getRear()->data.p, heading });
-    }
-
-    void addTarget(double x, double y, double heading, bool inDeg = true) {
-        if (inDeg) { heading = degToRad(heading); };
-        addToEnd({ Point2d(x, y), heading });
-    }
-
-    void addTarget(positionSet in, bool inDeg = true) {
-        if (inDeg) { in.head = degToRad(in.head); }
-        in.head = normalizeAngle(in.head);
-        addToEnd(in);
-    }
-
-    void addTarget(Vector2d in) {
-        addTarget(getRear()->data.p.x + in.getX(), getRear()->data.p.y + in.getY());
-    }
-
-    void addRelTarget(Vector2d in) {
-        in = in.getRotatedVector(normalizeAngle(getRear()->data.head) - M_PI_2);
-        addTarget(getRear()->data.p.x + in.getX(), getRear()->data.p.y + in.getY());
-    }
-
-    void addRelTarget(double heading, bool inDeg = true) {
-        if (inDeg) { heading = degToRad(heading); }
-        addToEnd({ getRear()->data.p, normalizeAngle(getRear()->data.head + heading) });
-    }
-
-    int getSize(){
-        return Path::getSize();
-    }
-
-    double arclength(){
-        return Path::arclength();
-    }
-
-    NodePS* getFront(){
-        return Path::getFront();
-    }
-
-    NodePS* getRear() {
-        return Path::getRear();
-    }
-
-    std::vector<positionSet> getList() {
-        return Path::getList();
-    }
+    TargetPath(positionSet initalPos);
+    void addTarget(double x, double y);
+    void addTarget(double heading, bool inDeg = true);
+    void addTarget(double x, double y, double heading, bool inDeg = true);
+    void addTarget(positionSet in, bool inDeg = true);
+    void addTarget(Vector2d in);
+    void addRelTarget(Vector2d in);
+    void addRelTarget(double heading, bool inDeg = true);
+    int getSize();
+    double arclength();
+    NodePS* getFront();
+    NodePS* getRear();
+    std::vector<positionSet> getList();
 };
