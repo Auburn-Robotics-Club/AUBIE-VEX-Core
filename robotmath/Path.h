@@ -95,6 +95,7 @@ private:
     Node* front = nullptr;
     Node* rear = nullptr;
     int size = 0;
+
 public:
     Path();
     int getSize() { return size; }
@@ -116,4 +117,63 @@ public:
     
     Path subpath(int start, int end);
     double arclength();
+
+    Node* getFront();
+    Node* getRear();
+};
+
+class TargetPath : private Path {
+public:
+    //Pass in either intended start of path or current robot position
+    TargetPath(positionSet initalPos){
+        addToStart(initalPos);
+    }
+
+    void addTarget(double x, double y) {
+        Point2d p = Point2d(x, y);
+        addToEnd({ p, normalizeAngle(Vector2d(1, 0).getAngle(Vector2d(getRear()->data.p, p))) });
+    }
+
+    void addTarget(double heading, bool inDeg = true) {
+        if (inDeg) { heading = degToRad(heading); }
+        heading = normalizeAngle(heading);
+        addToEnd({ getRear()->data.p, heading });
+    }
+
+    void addTarget(double x, double y, double heading, bool inDeg = true) {
+        if (inDeg) { heading = degToRad(heading); };
+        addToEnd({ Point2d(x, y), heading });
+    }
+
+    void addTarget(positionSet in, bool inDeg = true) {
+        if (inDeg) { in.head = degToRad(in.head); }
+        in.head = normalizeAngle(in.head);
+        addToEnd(in);
+    }
+
+    void addTarget(Vector2d in) {
+        addTarget(in.getX(), in.getY());
+    }
+
+    void addRelTarget(Vector2d in) {
+        in = in.getRotatedVector(normalizeAngle(getRear()->data.head) - M_PI_2);
+        addTarget(in.getX(), in.getY());
+    }
+
+    void addRelTarget(double heading, bool inDeg = true) {
+        if (inDeg) { heading = degToRad(heading); }
+        addToEnd({ getRear()->data.p, normalizeAngle(getRear()->data.head + heading) });
+    }
+
+    int getSize(){
+        return Path::getSize();
+    }
+
+    double arclength(){
+        return Path::arclength();
+    }
+
+    Node* getFront(){
+        return Path::getFront();
+    }
 };

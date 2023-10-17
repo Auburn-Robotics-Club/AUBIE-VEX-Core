@@ -344,7 +344,6 @@ private:
     positionSet currentPos = { Point2d(0, 0), 0 };
     positionSet previousPos = { Point2d(0, 0), 0 }; //Used only for velocity calculations in update()
     positionSet lastStoppedPos = { Point2d(0, 0), 0 };
-    positionSet lastTarget = { Point2d(0, 0), 0 };
 
     Vector2d velocity = Vector2d(0, 0);
     Vector2d acceleration = Vector2d(0, 0);
@@ -353,7 +352,6 @@ private:
 
     int lastPointCap = 3;
     Path previousPath; //TODO - Add timing component incase loops become inconsistant?
-    Path targetPath; //TODO
 
     void updateStopTime(double deltaTime) {
         //Linear
@@ -399,7 +397,6 @@ public:
         setHead(currentHeading, currentHeadingInDeg);
         previousPos = currentPos;
         lastStoppedPos = currentPos;
-        lastTarget = currentPos;
     }
 
     void setStartingPos(startingPosition pos) {
@@ -455,55 +452,6 @@ public:
         previousPos = currentPos;
     }
 
-    void clearTargets() {
-        targetPath.removeAll();
-    }
-
-    void shiftTarget() {
-        targetPath.next(true);
-    }
-
-    void addTarget(double x, double y) {
-        Point2d p = Point2d(x, y);
-        lastTarget = { p, normalizeAngle(Vector2d(1, 0).getAngle(Vector2d(lastTarget.p, p))) };
-        targetPath.addToEnd(lastTarget);
-    }
-
-    void addTarget(double heading, bool inDeg = true) {
-        if (inDeg) { heading = degToRad(heading); }
-        heading = normalizeAngle(heading);
-        lastTarget = { lastTarget.p, heading };
-        targetPath.addToEnd(lastTarget);
-    }
-
-    void addTarget(double x, double y, double heading, bool inDeg = true) {
-        if (inDeg) { heading = degToRad(heading); }
-        lastTarget = { Point2d(x, y), heading };
-        targetPath.addToEnd(lastTarget);
-    }
-
-    void addTarget(positionSet in, bool inDeg = true) {
-        if (inDeg) { in.head = degToRad(in.head); }
-        in.head = normalizeAngle(in.head);
-        lastTarget = in;
-        targetPath.addToEnd(in);
-    }
-
-    void addTarget(Vector2d in) {
-        addTarget(in.getX(), in.getY());
-    }
-
-    void addRelTarget(Vector2d in) {
-        in = translateLocalToGlobal(in);
-        addTarget(in.getX(), in.getY());
-    }
-
-    void addRelTarget(double heading, bool inDeg = true) {
-        if (inDeg) { heading = degToRad(heading); }
-        lastTarget = { lastTarget.p, normalizeAngle(currentPos.head + heading) };
-        targetPath.addToEnd(lastTarget);
-    }
-
     //Getters
     positionSet getPosition() {
         return currentPos;
@@ -511,30 +459,6 @@ public:
 
     positionSet getLastStoppedPos() {
         return lastStoppedPos;
-    }
-
-    int getTargetIndex() {
-        return targetPath.getIndex();
-    }
-
-    int getTargetSize(){
-        return targetPath.getSize();
-    }
-
-    positionSet getTarget() {
-        return targetPath.get();
-    }
-
-    positionSet getNextTarget() {
-        return targetPath.next();
-    }
-
-    Path& getPreviousPath() {
-        return previousPath;
-    }
-
-    Path& getTargetPath() {
-        return targetPath;
     }
 
     Vector2d getVelocity() {
