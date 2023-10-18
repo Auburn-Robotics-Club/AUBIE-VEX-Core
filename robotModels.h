@@ -268,71 +268,70 @@ public:
 //TODO support heading independece option for XDrive type
 class CurvePathController : public MotionController {
 private:
-    double linK;
-    double linC;
-    double rotK;
-    double rotC;
+    StraightPathController* sCont;
+    FeedForwardTurnController* rotCont;
 
 public:
-    CurvePathController(double linearK, double linearC, double rotationalK, double rotationalC){
-        linK = linearK;
-        linC = linearC;
-        rotK = rotationalK;
-        rotC = rotationalC;
+    CurvePathController(StraightPathController* straightCont, FeedForwardTurnController* turnController) {
+        sCont = straightCont;
+        rotCont = turnController;
     }
 
     void updateVel(double deltaT){
-        //Point2d currentPos = navigation.getPosition();
-        //Point2d target = navigation.getTarget();
-        //Point2d nextTarget = navigation.getNextTarget();
+        positionSet currentPos = navigation.getPosition();
 
+        NodePS* t = navigation.getTarget();
+        positionSet target = t->data;
 
+        Vector2d error = Vector2d(currentPos.p, target.p);
+        if (t->hasNext()) {
+            positionSet nextTarget = t->getNext()->data;
+            Vector2d nextError = Vector2d(target.p, nextTarget.p);
+
+            double a = error.getMagnitude();
+            double b = nextError.getMagnitude();
+            double c = Vector2d(currentPos.p, nextTarget.p).getMagnitude();
+
+            double q = (a * a + b * b - c * c) / (2 * a * b);
+            if (q != 1) {
+                double R = c / (2 * sqrt(1 - q * q));
+                double shiftTheta = 0.5 * acos((a * a - 2 * R * R) / (-2 * R * R));
+                shiftTheta = abs(shiftTheta) * -1 * sign(error.getAngle(nextError));
+
+                t->data.head = Vector2d(1, 0).getAngle(error) +shiftTheta;
+            }
+            else {
+                t->data.head = Vector2d(1, 0).getAngle(error);
+            }
+
+            realtiveTargetVel = Vector2d(0, 10);
+            rotCont->updateVel(deltaT);
+            targetW = rotCont->getAngularVelocity();
+
+            if (error.getMagnitude() < 6) {
+                navigation.shiftTarget();
+            }
+        } else {
+            sCont->updateVel(deltaT);
+            realtiveTargetVel = sCont->getVelocity();
+            targetW = sCont->getAngularVelocity();
+        }
     }
     
     positionSet predictNextPos(double deltaT){
-
+        return { Point2d(0, 0), 0 };
     }
 
     bool isDone(){
-        
+        return false;
     }
 
     void refresh(){
-        
+        rotCont->refresh();
+        sCont->refresh();
     }
 };
-/*      if(targetPathIndex < targetPath.size() - 1){
-        double a = error.getMagnitude();
-        double b = getNextGlobalError().getMagnitude();
-        double c = Vector(currentPos.p, nextTarget.p).getMagnitude();
 
-        double q = (a*a + b*b - c*c)/(2*a*b);
-        if(q != 1){
-          double R = c / (2*sqrt(1-q*q));
-          double shiftTheta = 0.5*acos((a*a-2*R*R)/(-2*R*R));
-          shiftTheta = abs(shiftTheta) * -1 * sign(error.getAngle(getNextGlobalError()));
-
-          setCurrentTargetTargetHeading(Vector(1, 0).getAngle(error) + shiftTheta);
-        }else{
-          setCurrentTargetTargetHeading(Vector(1, 0).getAngle(error));
-        }
-      }else{
-        if(error.getMagnitude() > noNewTurnRadius){
-          double targetHead = Vector(1, 0).getAngle(error);
-          if(!forward){
-            targetHead = targetHead + PI;
-            targetHead = normalizeAngle(targetHead);
-          }
-          setCurrentTargetTargetHeading(targetHead);
-        }
-      }
-      
-      //Curve PID
-        angleAdjustSpeed = max(0, 1 - 32.828*abs(hError)*abs(hError)); // TODO Test (+-10  degrees results in  as parabolic)
-        //angleAdjustSpeed = 1 - (2*abs(hError)/PI)*(errorRadius/error.getMagnitude()); // TODO TEST
-        targetVelocity.scale(angleAdjustSpeed);
-      
-      */
 
 //https://wiki.purduesigbots.com/software/control-algorithms/ramsete
 //https://wiki.purduesigbots.com/software/control-algorithms/basic-pure-pursuit

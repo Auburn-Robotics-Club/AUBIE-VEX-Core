@@ -119,6 +119,7 @@ void curveHeadings(Path points) {
             head = normalizeAngle(atan2(B.y - A.y, B.x - A.x));
         }
         n->data.head = head;
+        n = n->getNext();
     }
 };
 
