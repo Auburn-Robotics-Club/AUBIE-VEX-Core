@@ -34,6 +34,16 @@ NodePS* NodePS::addAfter(NodePS N) {
     return n;
 }
 
+void NodePS::removeThis() {
+    if (hasPrev()) {
+        getPrev()->next = next;
+    }
+    if (hasNext()) {
+        getNext()->prev = prev;
+    }
+    free(this);
+}
+
 void NodePS::removeBefore() {
     if (!hasPrev()) {
         return;
@@ -162,19 +172,16 @@ bool Path::removeFromStart(int i) {
     while (n) {
         if (i == 0) {
             if (n == front) {
-                front = n->next;
+                front = n->getNext();
             }
-            if (n->hasNext()) {
-                n->next->removeBefore();
+            if (n == rear) {
+                rear = n->getPrev();
             }
-            else { // n == rear must be true here
-                rear = n->prev;
-            }
-            free(n);
+            n->removeThis();
             size--;
             return true;
         }
-        n = n->next;
+        n = n->getNext();
         i--;
     }
     return false;
@@ -188,19 +195,17 @@ bool Path::removeFromEnd(int i) {
     NodePS* n = rear;
     while (n) {
         if (i == 0) {
+            if (n == front) {
+                front = n->getNext();
+            }
             if (n == rear) {
-                rear = n->prev;
+                rear = n->getPrev();
             }
-            if (n->hasPrev()) {
-                n->prev->removeAfter();
-            }
-            else { // n == front must be true here
-                front = n->next;
-            }
+            n->removeThis();
             size--;
             return true;
         }
-        n = n->prev;
+        n = n->getPrev();
         i--;
     }
     return false;

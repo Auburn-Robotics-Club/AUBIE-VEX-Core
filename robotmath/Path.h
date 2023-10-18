@@ -16,6 +16,7 @@ private:
 
     NodePS* addBefore(NodePS N);
     NodePS* addAfter(NodePS N);
+    void removeThis();
     void removeBefore();
     void removeAfter();
 public:
