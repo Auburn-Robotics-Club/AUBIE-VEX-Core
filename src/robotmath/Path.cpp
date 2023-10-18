@@ -306,6 +306,7 @@ NodePS* Path::getRear() {
 //Pass in either intended start of path or current robot position
 TargetPath::TargetPath(positionSet initalPos) {
     addToStart(initalPos);
+    currentNode = getFront();
 }
 
 void TargetPath::addTarget(double x, double y) {
@@ -342,26 +343,6 @@ void TargetPath::addRelTarget(Vector2d in) {
 void TargetPath::addRelTarget(double heading, bool inDeg) {
     if (inDeg) { heading = degToRad(heading); }
     addToEnd({ getRear()->data.p, normalizeAngle(getRear()->data.head + heading) });
-}
-
-void TargetPath::appendPath(Path a) {
-    Path::addToEnd(a);
-}
-
-int TargetPath::getSize() {
-    return Path::getSize();
-}
-
-double TargetPath::arclength() {
-    return Path::arclength();
-}
-
-NodePS* TargetPath::getFront() {
-    return Path::getFront();
-}
-
-NodePS* TargetPath::getRear() {
-    return Path::getRear();
 }
 
 std::vector<positionSet> TargetPath::getList() {

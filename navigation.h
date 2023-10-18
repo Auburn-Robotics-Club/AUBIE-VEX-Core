@@ -391,7 +391,6 @@ public:
     Navigator() {
         //stopRadius needs to be init
         //Starting pos needs to be init
-        newTargetList(targetList);
     }
 
     //Set starting Position
@@ -400,7 +399,6 @@ public:
         setHead(currentHeading, currentHeadingInDeg);
         previousPos = currentPos;
         lastStoppedPos = currentPos;
-        newTargetList(TargetPath(currentPos));
     }
 
     void setStartingPos(startingPosition pos) {
@@ -508,26 +506,10 @@ public:
     }
 
 
-    //TO BE REMOVED OR CHANGED
+    //TO BE CHANGED TO MOTION CONTROLLER DOMAIN - Incorporate into robot structure
+    //MAKE A BUILDER THAT ACCEPTS A MOTION CONTROLLER
+    //Event handling responsibility will be handled in the builder as well
 
-    void newTargetList(TargetPath path) {
-        targetList = path;
-        currentNode = targetList.getFront();
-    }
-
-    NodePS* getTarget() {
-        return currentNode;
-    }
-
-    void shiftTarget() {
-        if (currentNode->hasNext()) {
-            currentNode = currentNode->getNext();
-        }
-    }
-
-    bool pointingToLastTarget() {
-        return currentNode == targetList.getRear();
-    }
 };
 
 extern Navigator navigation;

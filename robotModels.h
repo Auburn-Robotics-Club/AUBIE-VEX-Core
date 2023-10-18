@@ -17,6 +17,8 @@ Written By: Carson Easterling
 //Timeouts are measured on the controller end but called from and terminated at the robot end
 class MotionController {
 protected:
+    TargetPath* tPath = nullptr;
+
     Vector2d realtiveTargetVel = Vector2d(0, 0);
     double targetW = 0;
 
@@ -24,7 +26,10 @@ public:
     virtual void updateVel(double deltaT) = 0; //Update vel targets
     virtual positionSet predictNextPos(double deltaT) = 0; //Predict next location at +deltaT
     virtual bool isDone() = 0; //Is stopped at target?
-    virtual void refresh() = 0;
+
+    void refresh(TargetPath* targetPath) {
+        tPath = targetPath; 
+    };
 
     Vector2d getVelocity() {
         return realtiveTargetVel; //Returns in Pct/Sec
@@ -44,7 +49,6 @@ public:
     }
 
     void updateVel(double deltaT) {}
-    void refresh() {}
 
     positionSet predictNextPos(double deltaT) {
         return predictLinear(navigation.getPosition(), navigation.getVelocity(), navigation.getAngularVelocity(), deltaT);
@@ -86,8 +90,14 @@ public:
     }
 
     void updateVel(double deltaT) {
+        if (tPath == nullptr) {
+            realtiveTargetVel = Vector2d(0, 0);
+            targetW = 0;
+            return;
+        }
+
         positionSet location = navigation.getPosition();
-        positionSet target = navigation.getTarget()->data;
+        positionSet target = tPath->getTarget()->data;
         Vector2d errorV = Vector2d(location.p, target.p);
 
         double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
@@ -117,7 +127,7 @@ public:
             if (fabs(angularError) < motionAngularCone){
                 speed = linK*error + linC*sign(error); 
             } else {
-                std::cout << radToDeg(angularError) << std::endl;
+                // std::cout << radToDeg(angularError) << std::endl;
             }
         }
  
@@ -129,15 +139,16 @@ public:
     }
 
     bool isDone() {
-        //IF no next targets or if next target when shifting reset timeouts (prob handle in diff function)
+        if (tPath == nullptr) {
+            return true;
+        }
+
         positionSet location = navigation.getPosition();
-        positionSet target = navigation.getTarget()->data; //TODO What happens if target list is empty? - 
+        positionSet target = tPath->getTarget()->data;
         Vector2d errorV = Vector2d(location.p, target.p);
 
-        return (navigation.isLinearStopped() && navigation.isRotationalStopped() && (errorV.dot(navigation.getRobotNormalVector()) < linThres));
+        return (navigation.isLinearStopped() && navigation.isRotationalStopped() && (errorV.dot(navigation.getRobotNormalVector()) < linThres) && (errorV.getMagnitude() < angleUpdateThes));
     }
-
-    void refresh(){};
 };
 
 class FeedForwardTurnController : public MotionController {
@@ -159,8 +170,12 @@ public:
     }
 
     double determineError() {
+        if (tPath == nullptr) {
+            return 0;
+        }
+
         positionSet location = navigation.getPosition();
-        positionSet target = navigation.getTarget()->data;
+        positionSet target = tPath->getTarget()->data;
 
         double error = shortestArcToTarget(location.head, target.head);
 
@@ -181,6 +196,12 @@ public:
     }
 
     void updateVel(double deltaT) {
+        if (tPath == nullptr) {
+            realtiveTargetVel = Vector2d(0, 0);
+            targetW = 0;
+            return;
+        }
+
         double error = determineError();
 
         realtiveTargetVel = Vector2d(0, 0);
@@ -193,6 +214,10 @@ public:
     }
      
     bool isDone() {
+        if (tPath == nullptr) {
+            return true;
+        }
+
         double error = determineError();
         return (navigation.isRotationalStopped() && (abs(error) < thres));
     }
@@ -200,8 +225,6 @@ public:
     positionSet predictNextPos(double deltaT) {
         return predictLinear(navigation.getPosition(), Vector2d(0, 0), navigation.getAngularVelocity(), deltaT);
     }
-
-    void refresh(){};
 };
 
 class StraightPathController : public MotionController {
@@ -216,9 +239,15 @@ public:
     }
 
     void updateVel(double deltaT){
+        if (tPath == nullptr) {
+            realtiveTargetVel = Vector2d(0, 0);
+            targetW = 0;
+            return;
+        }
+
         if(!isDone()){
+            NodePS* t = tPath->getTarget();
             if(turning){
-                NodePS* t = navigation.getTarget();
                 double newHead = Vector2d(1, 0).getAngle(Vector2d(navigation.getPosition().p, t->data.p));
                 t->data.head = newHead;
 
@@ -228,7 +257,7 @@ public:
 
                 if(rotCont->isDone()){
                     turning = false;
-                    linCont->refresh();
+                    linCont->refresh(tPath);
                 }
             } else {
                 linCont->updateVel(deltaT);
@@ -237,8 +266,8 @@ public:
 
                 if(linCont->isDone()){
                     turning = true;
-                    rotCont->refresh();
-                    navigation.shiftTarget();
+                    rotCont->refresh(tPath);
+                    tPath->shiftTarget();
                 }
             }
         } else {
@@ -256,66 +285,35 @@ public:
     }
 
     bool isDone(){
-        return navigation.pointingToLastTarget() && !turning && linCont->isDone();
+        if (tPath == nullptr) {
+            return true;
+        }
+
+        return tPath->pointingToLastTarget() && !turning && linCont->isDone();
     }
 
-    void refresh(){
-        rotCont->refresh();
-        linCont->refresh();
-    }
+    void refresh(TargetPath* targetPath) {
+        turning = true;
+        MotionController::refresh(targetPath);
+    };
 };
 
 //TODO support heading independece option for XDrive type
 class CurvePathController : public MotionController {
 private:
-    StraightPathController* sCont;
-    FeedForwardTurnController* rotCont;
+    double speed;
+    double kTurning;
+    double lookAheadDistance;
 
 public:
-    CurvePathController(StraightPathController* straightCont, FeedForwardTurnController* turnController) {
-        sCont = straightCont;
-        rotCont = turnController;
+    CurvePathController(double speed, double kTurning, double lookAheadDistance) {
+        this->speed = speed;
+        this->kTurning = kTurning;
+        this->lookAheadDistance = lookAheadDistance;
     }
 
     void updateVel(double deltaT){
-        positionSet currentPos = navigation.getPosition();
-
-        NodePS* t = navigation.getTarget();
-        positionSet target = t->data;
-
-        Vector2d error = Vector2d(currentPos.p, target.p);
-        if (t->hasNext()) {
-            positionSet nextTarget = t->getNext()->data;
-            Vector2d nextError = Vector2d(target.p, nextTarget.p);
-
-            double a = error.getMagnitude();
-            double b = nextError.getMagnitude();
-            double c = Vector2d(currentPos.p, nextTarget.p).getMagnitude();
-
-            double q = (a * a + b * b - c * c) / (2 * a * b);
-            if (q != 1) {
-                double R = c / (2 * sqrt(1 - q * q));
-                double shiftTheta = 0.5 * acos((a * a - 2 * R * R) / (-2 * R * R));
-                shiftTheta = abs(shiftTheta) * -1 * sign(error.getAngle(nextError));
-
-                t->data.head = Vector2d(1, 0).getAngle(error) +shiftTheta;
-            }
-            else {
-                t->data.head = Vector2d(1, 0).getAngle(error);
-            }
-
-            realtiveTargetVel = Vector2d(0, 10);
-            rotCont->updateVel(deltaT);
-            targetW = rotCont->getAngularVelocity();
-
-            if (error.getMagnitude() < 6) {
-                navigation.shiftTarget();
-            }
-        } else {
-            sCont->updateVel(deltaT);
-            realtiveTargetVel = sCont->getVelocity();
-            targetW = sCont->getAngularVelocity();
-        }
+        //https://www.youtube.com/watch?v=qYR7mmcwT2w
     }
     
     positionSet predictNextPos(double deltaT){
@@ -324,11 +322,6 @@ public:
 
     bool isDone(){
         return false;
-    }
-
-    void refresh(){
-        rotCont->refresh();
-        sCont->refresh();
     }
 };
 
@@ -411,7 +404,7 @@ public:
 
     //Length is front to back, width is side to side, wheelRadius is the radius of a drive wheel, driveBaseWidth is the distance from midwheel to the other side midwheel, gear ratio is in_out of both motor and drivetrain multiplied, maxSpeedInchesPerSecondIn at 100 percent as measured: -1 relies on math from motor
     RobotType(double lengthIn, double widthIn, double wheelRadiusIn, double driveBaseWidthIn, double gearRatio_in_out) {
-        setController(&defaultController);
+        motion(nullptr, &defaultController);
         length = lengthIn;
         width = widthIn;
         gearRatio = gearRatio_in_out;
@@ -419,8 +412,8 @@ public:
         driveBaseRadius = driveBaseWidthIn * 0.5;
     }
 
-    void setController(MotionController* newController) {
-        newController->refresh();
+    void motion(TargetPath* target, MotionController* newController) {
+        newController->refresh(target);
         controller = newController;
     }
 

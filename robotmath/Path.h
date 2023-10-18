@@ -74,7 +74,10 @@ public:
 
 };
 
-class TargetPath : private Path {
+class TargetPath : protected Path {
+private:
+    NodePS* currentNode = nullptr;
+
 public:
     //Pass in either intended start of path or current robot position
     TargetPath(positionSet initalPos);
@@ -85,10 +88,24 @@ public:
     void addTarget(Vector2d in);
     void addRelTarget(Vector2d in);
     void addRelTarget(double heading, bool inDeg = true);
-    void appendPath(Path a);
-    int getSize();
-    double arclength();
-    NodePS* getFront();
-    NodePS* getRear();
+
+    void appendPath(Path other) {
+        Path::addToEnd(other);
+    }
+
+    void shiftTarget() {
+        if (currentNode->hasNext()) {
+            currentNode = currentNode->getNext();
+        }
+    }
+
+    NodePS* getTarget() {
+        return currentNode;
+    }
+
+    bool pointingToLastTarget() {
+        return currentNode == getRear();
+    }
+
     std::vector<positionSet> getList();
 };
