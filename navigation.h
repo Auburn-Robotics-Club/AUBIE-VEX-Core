@@ -351,7 +351,7 @@ private:
     double angularAcceleration = 0;
 
     int lastPointCap = 3;
-    //Path previousPath; //TODO - Add timing component incase loops become inconsistant?
+    Path previousPath; //TODO - Add timing component incase loops become inconsistant?
 
     void updateStopTime(double deltaTime) {
         //Linear
@@ -385,8 +385,6 @@ private:
         }
     }
 
-    TargetPath targetList = TargetPath(currentPos);
-    NodePS* currentNode;
 public:
     Navigator() {
         //stopRadius needs to be init
@@ -447,10 +445,10 @@ public:
         //TODO Target management, events, etc
         //Hanndle Tagrte management, calculating arclength, curvature, nextTagrte, target vector, etc; Motion contoller decides when next tagret is, navigation just answers question about the path
         
-        //if (previousPath.getSize() >= lastPointCap) {
-        //    previousPath.removeFromStart(1);
-        //}
-        //previousPath.addToEnd(currentPos);
+        if (previousPath.getSize() >= lastPointCap) {
+            previousPath.removeFromStart(0);
+        }
+        previousPath.addToEnd(currentPos);
         previousPos = currentPos;
     }
 
@@ -505,11 +503,9 @@ public:
         return (v * v / a);
     }
 
-
-    //TO BE CHANGED TO MOTION CONTROLLER DOMAIN - Incorporate into robot structure
-    //MAKE A BUILDER THAT ACCEPTS A MOTION CONTROLLER
-    //Event handling responsibility will be handled in the builder as well
-
+    Path* const getPrevPath() {
+        return &previousPath;
+    }
 };
 
 extern Navigator navigation;

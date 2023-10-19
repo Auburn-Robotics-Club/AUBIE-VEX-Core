@@ -313,7 +313,47 @@ public:
     }
 
     void updateVel(double deltaT){
-        //https://www.youtube.com/watch?v=qYR7mmcwT2w
+        positionSet currentPos = navigation.getPosition();
+        NodePS* t = tPath->getTarget();
+        positionSet target = t->data;
+        Vector2d error = Vector2d(currentPos.p, target.p);
+
+        while (error.getMagnitude() < lookAheadDistance) {
+            tPath->shiftTarget();
+            t = tPath->getTarget();
+            target = t->data;
+            error = Vector2d(currentPos.p, target.p);
+        }
+
+        if (t->hasNext()) {
+            positionSet nextTarget = t->getNext()->data;
+            Vector2d nextError = Vector2d(target.p, nextTarget.p);
+
+            double a = error.getMagnitude();
+            double b = nextError.getMagnitude();
+            double c = Vector2d(currentPos.p, nextTarget.p).getMagnitude();
+
+            double q = (a * a + b * b - c * c) / (2 * a * b);
+            if (q != 1) {
+                double R = c / (2 * sqrt(1 - q * q));
+                double shiftTheta = 0.5 * acos((a * a - 2 * R * R) / (-2 * R * R));
+                shiftTheta = abs(shiftTheta) * -1 * sign(error.getAngle(nextError));
+
+                t->data.head = Vector2d(1, 0).getAngle(error) + shiftTheta;
+            }
+            else {
+                t->data.head = Vector2d(1, 0).getAngle(error);
+            }
+
+            double hError = shortestArcToTarget(currentPos.head, t->data.head);
+            realtiveTargetVel = Vector2d(0, speed).scale(cos(hError));
+            targetW = kTurning * hError;
+        }
+        else {
+            double hError = shortestArcToTarget(currentPos.head, t->data.head);
+            realtiveTargetVel = Vector2d(0, speed).scale(cos(hError));
+            targetW = kTurning * hError;
+        }
     }
     
     positionSet predictNextPos(double deltaT){
