@@ -366,6 +366,60 @@ public:
 };
 
 
+class PurePursitController : public MotionController {
+private:
+    double speed, lookahead, pTurn;
+public:
+    PurePursitController(double speed, double lookahead, double pTurn) {
+        this->speed = speed;
+        this->lookahead = lookahead;
+        this->pTurn = pTurn;
+    }
+
+    void updateVel(double deltaT) override {
+        this->realtiveTargetVel = Vector2d(0, 0);
+        this->targetW = 0;
+
+        if (!tPath) {
+            return;
+        }
+
+        NodePS* prev = tPath->getTarget();
+        if (!prev) { 
+            return;
+        }
+        NodePS* curr = prev->getNext();
+        if (!curr) {
+            return;
+        }
+
+        positionSet position = navigation.getPosition();
+
+        Point2d p1, p2;
+
+        double angle = navigation.getRobotNormalVector().getAngle(curr->data.p - position.p);
+        if (isnan(angle)) {
+            angle = 0;
+        }
+
+        if ((position.p - curr->data.p).dot(curr->data.p - prev->data.p) > 0) {
+            tPath->shiftTarget();
+        }
+
+
+        this->realtiveTargetVel = Vector2d(0, speed);
+        this->targetW = pTurn * angle;
+    }
+    
+    positionSet predictNextPos(double deltaT) override {
+        return navigation.getPosition();
+    }
+    
+    bool isDone() override {
+        return tPath->pointingToLastTarget();
+    }
+};
+
 //https://wiki.purduesigbots.com/software/control-algorithms/ramsete
 //https://wiki.purduesigbots.com/software/control-algorithms/basic-pure-pursuit
 
