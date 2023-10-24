@@ -393,26 +393,41 @@ public:
             return;
         }
 
+        Vector2d delta = curr->data.p - prev->data.p;
         positionSet position = navigation.getPosition();
 
-        Point2d p1, p2;
+        Point2d target = curr->data.p;
+        // Passed prev point, apply lookahead
+        if ((position.p - prev->data.p).dot(delta) > 0) {
+            double l = lookahead + (position.p - prev->data.p).project(delta).getMagnitude();
+            auto offset = delta * (l / delta.getMagnitude());
+            target = prev->data.p;
+            target = Point2d(target.x + offset.getX(), target.y + offset.getY());
+        }
 
-        double angle = navigation.getRobotNormalVector().getAngle(curr->data.p - position.p);
+        double angle = navigation.getRobotNormalVector().getAngle(target - position.p);
         if (isnan(angle)) {
             angle = 0;
         }
 
-        if ((position.p - curr->data.p).dot(curr->data.p - prev->data.p) > 0) {
+        // Passed curr point, go to next point
+        if ((position.p - curr->data.p).dot(delta) > 0) {
             tPath->shiftTarget();
         }
 
-
         this->realtiveTargetVel = Vector2d(0, speed);
         this->targetW = pTurn * angle;
+
+        if (!curr->hasNext()) {
+            target = curr->data.p;
+            double k = (position.p - target).getMagnitude() / delta.getMagnitude();
+            realtiveTargetVel = realtiveTargetVel * fmax(0.5, fmin(1, k * k));
+        }
     }
     
     positionSet predictNextPos(double deltaT) override {
-        return navigation.getPosition();
+        auto pos = navigation.getPosition();
+        return predictLinear(pos, realtiveTargetVel.getRotatedVector(M_PI_2 - normalizeAngle(pos.head)), targetW, deltaT);
     }
     
     bool isDone() override {
