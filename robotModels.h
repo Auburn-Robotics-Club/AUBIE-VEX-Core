@@ -601,8 +601,8 @@ public:
         //TODO accel controls
 
         if (setMotorControls) {
-            setSide(*leftSide, left);
-            setSide(*rightSide, right);
+            setM(*leftSide, left);
+            setM(*rightSide, right);
         }
     }
 };
@@ -671,10 +671,10 @@ public:
 
 
         if (setMotorControls) {
-            setSide(*NEMotor, NESW_Coefficent * speed + omega);
-            setSide(*NWMotor, NWSE_Coefficent * speed - omega);
-            setSide(*SEMotor, NWSE_Coefficent * speed + omega);
-            setSide(*SWMotor, NESW_Coefficent * speed - omega);
+            setM(*NEMotor, NESW_Coefficent * speed + omega);
+            setM(*NWMotor, NWSE_Coefficent * speed - omega);
+            setM(*SEMotor, NWSE_Coefficent * speed + omega);
+            setM(*SWMotor, NESW_Coefficent * speed - omega);
         }
     }
 };
