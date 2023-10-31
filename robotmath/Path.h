@@ -82,12 +82,12 @@ public:
     //Pass in either intended start of path or current robot position
     TargetPath(positionSet initalPos);
     void addTarget(double x, double y);
-    void addTarget(double heading, bool inDeg = true);
-    void addTarget(double x, double y, double heading, bool inDeg = true);
-    void addTarget(positionSet in, bool inDeg = true);
+    void addTarget(double heading, bool inDeg);
+    void addTarget(double x, double y, double heading, bool inDeg);
+    void addTarget(positionSet in, bool inDeg);
     void addTarget(Vector2d in);
     void addRelTarget(Vector2d in);
-    void addRelTarget(double heading, bool inDeg = true);
+    void addRelTarget(double heading, bool inDeg);
 
     void appendPath(Path other) {
         Path::addToEnd(other);

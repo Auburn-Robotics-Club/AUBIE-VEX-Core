@@ -147,6 +147,7 @@ public:
         positionSet target = tPath->getTarget()->data;
         Vector2d errorV = Vector2d(location.p, target.p);
 
+        //std::cout << errorV.getMagnitude() << std::endl;
         return (navigation.isLinearStopped() && navigation.isRotationalStopped() && (errorV.dot(navigation.getRobotNormalVector()) < linThres) && (errorV.getMagnitude() < angleUpdateThes));
     }
 };
@@ -406,9 +407,6 @@ public:
         }
 
         double angle = navigation.getRobotNormalVector().getAngle(target - position.p);
-        if (isnan(angle)) {
-            angle = 0;
-        }
 
         // Passed curr point, go to next point
         if ((position.p - curr->data.p).dot(delta) > 0) {
