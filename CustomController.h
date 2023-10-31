@@ -1,4 +1,5 @@
-#include "vex.h"
+#pragma once
+#include "robotmodels.h"
 
 using namespace vex;
 
