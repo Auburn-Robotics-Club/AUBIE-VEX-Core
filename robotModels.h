@@ -470,7 +470,7 @@ void setM(vex::motor m, double speed, vex::velocityUnits uni = vex::velocityUnit
     }
 }
 
-void setM(vex::motor_group m, double speed, vex::velocityUnits uni = vex::velocityUnits::pct) {
+void setSide(vex::motor_group m, double speed, vex::velocityUnits uni = vex::velocityUnits::pct) {
     m.setVelocity(speed, uni);
     if (speed == 0) {
         m.stop();
