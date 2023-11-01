@@ -27,7 +27,7 @@ public:
     virtual positionSet predictNextPos(double deltaT) = 0; //Predict next location at +deltaT
     virtual bool isDone() = 0; //Is stopped at target?
 
-    void refresh(TargetPath* targetPath) {
+    virtual void refresh(TargetPath* targetPath) {
         tPath = targetPath; 
     };
 
@@ -69,12 +69,13 @@ public:
     double angThres;
     double angleUpdateThes;
     double motionAngularCone;
+    double angularFrequency;
 
     //Recommended editables
     bool fwd = true;
 
     FeedForwardDriveController(double linearK, double linearC, double angularK, double angularC, 
-                          double linearThreshold=1, double motionAngularLimit=degToRad(7), double noAngleUpdateThreshold=5.0, double turnAngularThreshold=degToRad(2)) {
+                          double linearThreshold=1, double motionAngularLimit=degToRad(45), double noAngleUpdateThreshold=5.0, double turnAngularThreshold=degToRad(2)) {
         linK = linearK;
         linC = linearC;
         angK = angularK;
@@ -83,6 +84,7 @@ public:
         angThres = turnAngularThreshold;
         angleUpdateThes = noAngleUpdateThreshold;
         motionAngularCone = motionAngularLimit;
+        angularFrequency = (M_PI_2) / motionAngularLimit;
     }
 
     void setDirection(bool forward){
@@ -124,11 +126,8 @@ public:
 
         double speed = 0;
         if(fabs(error) > linThres) { 
-            if (fabs(angularError) < motionAngularCone){
-                speed = linK*error + linC*sign(error); 
-            } else {
-                // std::cout << radToDeg(angularError) << std::endl;
-            }
+            speed = linK*error + linC*sign(error); 
+            speed = speed * fmax(0, cos(angularFrequency*angularError));
         }
  
         realtiveTargetVel = Vector2d(0, speed);
@@ -151,6 +150,86 @@ public:
         return (navigation.isLinearStopped() && navigation.isRotationalStopped() && (errorV.dot(navigation.getRobotNormalVector()) < linThres) && (errorV.getMagnitude() < angleUpdateThes));
     }
 };
+
+class TrapizoidalDriveController : public FeedForwardDriveController {
+protected:
+    Point2d startPos = Point2d(0, 0);
+
+public:
+    double linKUp;
+    double linKDown;
+    double cruiseSpeed;
+
+    //Prob could inherit from other class to reduce copyover
+    TrapizoidalDriveController(double linearKUp, double linearKDown, double linearC, double angularK, double angularC, 
+                          double cruiseSpeedIn, double linearThreshold=1, double motionAngularLimit=degToRad(45), double noAngleUpdateThreshold=5.0, double turnAngularThreshold=degToRad(2)) 
+                          : FeedForwardDriveController(0, 0, angularK, angularC) {
+        linKUp = linearKUp;
+        linKDown = linearKDown;
+        linC = linearC;
+        angK = angularK;
+        angC = angularC;
+        linThres = linearThreshold;
+        angThres = turnAngularThreshold;
+        angleUpdateThes = noAngleUpdateThreshold;
+        motionAngularCone = motionAngularLimit;
+        angularFrequency = (M_PI_2) / motionAngularLimit;
+        cruiseSpeed = cruiseSpeedIn;
+    }
+
+    void refresh(TargetPath* targetPath) override {
+        MotionController::refresh(targetPath);
+        startPos = navigation.getPosition().p; 
+        std::cout << "AAAA" << std::endl;
+    };
+
+    void updateVel(double deltaT) {
+        if (tPath == nullptr) {
+            realtiveTargetVel = Vector2d(0, 0);
+            targetW = 0;
+            return;
+        }
+
+        positionSet location = navigation.getPosition();
+        positionSet target = tPath->getTarget()->data;
+        Vector2d errorV = Vector2d(location.p, target.p);
+
+        double error = navigation.translateGlobalToLocal(errorV).getY(); ; //Returns the error in the forward direction of the robot
+        double targetHead = Vector2d(1, 0).getAngle(errorV);
+
+        //std::cout << "LIN ERROR" << error << ", " << radToDeg(targetHead) << std::endl;
+        //std::cout << target.p << std::endl;
+
+        double angularError = 0;
+        if(errorV.getMagnitude() > angleUpdateThes){
+            if(fwd){
+                angularError = shortestArcToTarget(location.head, targetHead);
+            } else {
+                angularError = shortestArcToTarget(location.head, targetHead + M_PI);
+            }
+        }
+        
+        //Angular speed
+        if(fabs(angularError) > angThres){
+            targetW = angularError*angK + angC*sign(angularError);
+        } else {
+            targetW = 0;
+        }
+
+        double speed = 0;
+        if(fabs(error) > linThres) { 
+            Vector2d reverseError = Vector2d(startPos, location.p);
+            speed = fmin(linKUp*fabs(error) + linC, cruiseSpeed);
+            speed = fmin(speed, linKDown*reverseError.getMagnitude() + linC);
+            speed = speed * fmax(0, cos(angularFrequency*angularError));
+            speed = speed * sign(error);
+            std::cout << speed << std::endl;
+        }
+        
+        realtiveTargetVel = Vector2d(0, speed);
+    }
+};
+
 
 class FeedForwardTurnController : public MotionController {
 private:
@@ -220,7 +299,7 @@ public:
         }
 
         double error = determineError();
-        return (navigation.isRotationalStopped() && (abs(error) < thres));
+        return (navigation.isRotationalStopped() && (fabs(error) < thres));
     }
     
     positionSet predictNextPos(double deltaT) {
