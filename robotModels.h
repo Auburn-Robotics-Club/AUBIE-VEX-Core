@@ -488,7 +488,7 @@ public:
         double angle = navigation.getRobotNormalVector().getAngle(target - position.p);
 
         // Passed curr point, go to next point
-        if ((position.p - curr->data.p).dot(delta) > 0) {
+        if ((target - curr->data.p).dot(delta) > 0) {
             tPath->shiftTarget();
         }
 
