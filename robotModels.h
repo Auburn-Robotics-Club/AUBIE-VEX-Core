@@ -497,8 +497,8 @@ public:
 
         if (!curr->hasNext()) {
             target = curr->data.p;
-            double k = (position.p - target).getMagnitude() / delta.getMagnitude();
-            realtiveTargetVel = realtiveTargetVel * fmax(0.5, fmin(1, k * k));
+            // double k = (position.p - target).getMagnitude() / delta.getMagnitude();
+            realtiveTargetVel = realtiveTargetVel/* * fmax(0.5, fmin(1, k * k))*/;
         }
     }
     
