@@ -120,6 +120,13 @@ void Path::addToStart(Path other) {
 
 void Path::addToEnd(Path other) {
     NodePS* n = other.front;
+    // If start overlaps skip it
+    if (n && rear) {
+        Vector2d v = n->data.p - rear->data.p;
+        if (v.getMagnitude() < 0.001) {
+            n = n->next;
+        }
+    }
     while (n) {
         size++;
         addToEnd(n->data);
