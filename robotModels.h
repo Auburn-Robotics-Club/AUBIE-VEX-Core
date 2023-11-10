@@ -180,7 +180,6 @@ public:
     void refresh(TargetPath* targetPath) override {
         MotionController::refresh(targetPath);
         startPos = navigation.getPosition().p; 
-        std::cout << "AAAA" << std::endl;
     };
 
     void updateVel(double deltaT) {
@@ -219,8 +218,8 @@ public:
         double speed = 0;
         if(fabs(error) > linThres) { 
             Vector2d reverseError = Vector2d(startPos, location.p);
-            speed = fmin(linKUp*fabs(error) + linC, cruiseSpeed);
-            speed = fmin(speed, linKDown*reverseError.getMagnitude() + linC);
+            speed = fmin(linKDown*fabs(error) + linC, cruiseSpeed);
+            speed = fmin(speed, linKUp*reverseError.getMagnitude() + linC);
             speed = speed * fmax(0, cos(angularFrequency*angularError));
             speed = speed * sign(error);
             std::cout << speed << std::endl;
