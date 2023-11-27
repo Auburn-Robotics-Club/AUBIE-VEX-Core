@@ -235,11 +235,14 @@ private:
     int direction = 0; //0 = Shortest, 1 = Forced CCW, 2 = Forced CW
 public:
     double p;
+    double i;
     double c;
     double thres;
+    double accumulator = 0;
 
-    FeedForwardTurnController(double k, double constant, double threshold=degToRad(1)){
-        p = k;
+    FeedForwardTurnController(double p, double i, double constant, double threshold=degToRad(1)){
+        this->p = p;
+        this->i = i;
         c = constant;
         thres = threshold;
     }
@@ -283,11 +286,24 @@ public:
 
         double error = determineError();
 
+        // PID Integral math
+        // Only activates when |error| < ~10 degrees
+        if (fabs(error) < 0.15) {
+            accumulator += error;
+            // Reset accumulator if value gets too large to avoid integral windup
+            if (fabs(accumulator) > M_PI) {
+                accumulator = 0;
+            }
+        } else {
+            accumulator = 0;
+        }
+
         realtiveTargetVel = Vector2d(0, 0);
 
         if(fabs(error) > thres){
-            targetW = error*p + c*sign(error);
+            targetW = error*p + i*accumulator + c*sign(error);
         } else {
+            accumulator = 0;
             targetW = 0;
         }
     }
