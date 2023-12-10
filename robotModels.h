@@ -151,6 +151,7 @@ public:
     }
 };
 
+//KUp, kDown, linC, angK, angC, cruiseSpeed
 class TrapizoidalDriveController : public FeedForwardDriveController {
 protected:
     Point2d startPos = Point2d(0, 0);
@@ -222,7 +223,7 @@ public:
             speed = fmin(speed, linKUp*reverseError.getMagnitude() + linC);
             speed = speed * fmax(0, cos(angularFrequency*angularError));
             speed = speed * sign(error);
-            std::cout << speed << std::endl;
+            //std::cout << speed << std::endl;
         }
         
         realtiveTargetVel = Vector2d(0, speed);
