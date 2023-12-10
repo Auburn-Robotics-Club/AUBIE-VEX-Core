@@ -1,5 +1,6 @@
 #include <math.h>
 
+/*
 class FancyPIDController {
 private:
     bool wrapping;
@@ -87,4 +88,4 @@ bool FancyPIDController::isAtTarget() {
 // Modulus that behaves for negative x
 static double euclidMod(double x, double y) {
     return x - (y * floor(x / y));
-}
+}*/
