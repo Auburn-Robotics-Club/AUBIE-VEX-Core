@@ -107,5 +107,9 @@ public:
         return currentNode == getRear();
     }
 
+    positionSet getLastTarget(){
+        return getRear()->data;
+    }
+
     std::vector<positionSet> getList();
 };
