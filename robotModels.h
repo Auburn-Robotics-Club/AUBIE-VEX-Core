@@ -461,6 +461,118 @@ public:
     }
 };
 
+// From "Controls Engineering in FRC" Chapter 8.8
+// The values b=2 and zeta=0.7 when using meters and radians
+// An extra constructor is provided that uses these constants for *inches* and radians
+//
+// Units:
+// - zeta = 1/angle
+// - b = angle^2/length^2
+// 
+// Constraints:
+// - b > 0
+// - 0 < zeta < 1
+class RamseteController : public MotionController {
+private:
+    double zeta, b, fwdSpeed, rotSpeed;
+    double samplePos = 0;
+
+    static double sincf(double x) {
+        // lim x->0 sin(x)/x = 1 (by L'Hôpital's rule)
+        if (fabs(x) < 1e-6) {
+            return 1;
+        }
+        return sinf(x) / x;
+    }
+
+    positionSet samplePath() {
+        NodePS* current = tPath->getTarget();
+        if (!current) {
+            return { Point2d(0, 0), 0 };
+        }
+        
+        NodePS* next = current->getNext();
+        // At end
+        if (!next) {
+            return current->data;
+        }
+
+        Vector2d dir = next->data.p - current->data.p;
+        double length = dir.getMagnitude();
+
+        // If we are past the next point, shift and retry
+        if (samplePos > length) {
+            samplePos -= length;
+            tPath->shiftTarget();
+            return samplePath();
+        }
+
+        // Lerp position
+        double t = samplePos / length;
+        Vector2d pos = dir * t;
+
+        // Lerp heading
+        double currHead = normalizeAngle(current->data.head);
+        double nextHead = normalizeAngle(next->data.head);
+
+        // Go the other way because its faster
+        if (nextHead - currHead > M_PI) {
+            nextHead = -nextHead;
+        }
+
+        return { Point2d(pos.getX(), pos.getY()), (currHead * (1 - t)) + (nextHead * t) };
+    }
+public:
+    RamseteController(double fwdSpeed, double rotSpeed) : RamseteController(0.7, 2.0 / (100 * 100 * 2.54 * 2.54), fwdSpeed, rotSpeed) {}
+
+    RamseteController(double zeta, double b, double fwdSpeed, double rotSpeed) {
+        this->zeta = zeta;
+        this->b = b;
+        this->fwdSpeed = fwdSpeed;
+        this->rotSpeed = rotSpeed;
+    }
+
+    void updateVel(double deltaT) override {
+        positionSet target = samplePath();
+        positionSet current = navigation.getPosition();
+
+        // Get offset from path
+        double dx = target.p.x - current.p.x;
+        double dy = target.p.y - current.p.y;
+        double dTheta = normalizeAngle(target.head) - normalizeAngle(current.head);
+
+        // Transform to robot frame
+        double ex = (dx * cosf(target.head)) + (dy * sinf(target.head));
+        double ey = -(dx * sinf(target.head)) + (dy * cosf(target.head));
+        double eTheta = dTheta;
+
+        // Desired linear/angular velocities
+        // You could add motion profiles or other fancy stuff here
+        // Going to alias for now since we do not have velocity information in the path
+        double vd = this->fwdSpeed;
+        double wd = this->rotSpeed;
+
+        // Time-varying gain, do not change (change b or zeta instead)
+        double k = 2 * this->zeta * sqrtf((wd * wd) + (b * (vd * vd)));
+
+        this->realtiveTargetVel = Vector2d(0, (vd * cosf(eTheta)) + (k * ex));
+        this->targetW = wd + (k * eTheta) + (b * vd * sincf(eTheta) * ey);
+
+        // Update sampling position but only progress if we are close
+        if (Vector2d(current.p, target.p).getMagnitude() < 3) {
+            samplePos += deltaT * vd;
+        }
+    }
+
+    positionSet predictNextPos(double deltaT) override {
+        auto pos = navigation.getPosition();
+        return predictLinear(pos, realtiveTargetVel.getRotatedVector(M_PI_2 - normalizeAngle(pos.head)), targetW, deltaT);
+    }
+
+    bool isDone() override {
+        return tPath->pointingToLastTarget();
+    }
+};
 
 class PurePursitController : public MotionController {
 private:
