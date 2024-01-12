@@ -476,6 +476,7 @@ class RamseteController : public MotionController {
 private:
     double zeta, b, fwdSpeed, rotSpeed;
     double samplePos = 0;
+    bool holonomic;
 
     static double sincf(double x) {
         // lim x->0 sin(x)/x = 1 (by L'Hôpital's rule)
@@ -511,25 +512,36 @@ private:
         double t = samplePos / length;
         Vector2d pos = dir * t;
 
-        // Lerp heading
-        double currHead = normalizeAngle(current->data.head);
-        double nextHead = normalizeAngle(next->data.head);
+        double heading = 0;
 
-        // Go the other way because its faster
-        if (nextHead - currHead > M_PI) {
-            nextHead = -nextHead;
+        // 3 DOF drive trains can point in any direction
+        if (holonomic) { // X drive
+            // Lerp heading
+            double currHead = normalizeAngle(current->data.head);
+            double nextHead = normalizeAngle(next->data.head);
+
+            // Go the other way because its faster
+            if (nextHead - currHead > M_PI) {
+                nextHead = -nextHead;
+            }
+
+            heading = (currHead * (1 - t)) + (nextHead * t);
+        } else { // Tank drive
+            // Otherwise we must be pointing tangent to the path
+            heading = normalizeAngle(dir.getAngle(Vector2d(1, 0)));
         }
 
-        return { Point2d(pos.getX(), pos.getY()), (currHead * (1 - t)) + (nextHead * t) };
+        return { Point2d(pos.getX(), pos.getY()), heading };
     }
 public:
-    RamseteController(double fwdSpeed, double rotSpeed) : RamseteController(0.7, 2.0 / (100 * 100 * 2.54 * 2.54), fwdSpeed, rotSpeed) {}
+    RamseteController(double fwdSpeed, double rotSpeed, bool holonomic) : RamseteController(0.7, 2.0 / (100 * 100 * 2.54 * 2.54), fwdSpeed, rotSpeed, holonomic) {}
 
-    RamseteController(double zeta, double b, double fwdSpeed, double rotSpeed) {
+    RamseteController(double zeta, double b, double fwdSpeed, double rotSpeed, bool holonomic) {
         this->zeta = zeta;
         this->b = b;
         this->fwdSpeed = fwdSpeed;
         this->rotSpeed = rotSpeed;
+        this->holonomic = holonomic;
     }
 
     void updateVel(double deltaT) override {
