@@ -534,7 +534,7 @@ private:
         return { Point2d(pos.getX(), pos.getY()), heading };
     }
 public:
-    RamseteController(double fwdSpeed, double rotSpeed, bool holonomic) : RamseteController(0.7, 2.0 / (100 * 100 * 2.54 * 2.54), fwdSpeed, rotSpeed, holonomic) {}
+    RamseteController(double fwdSpeed, double rotSpeed, bool holonomic) : RamseteController(0.7, 2.0 / (100 * 100) * (2.54 * 2.54), fwdSpeed, rotSpeed, holonomic) {}
 
     RamseteController(double zeta, double b, double fwdSpeed, double rotSpeed, bool holonomic) {
         this->zeta = zeta;
