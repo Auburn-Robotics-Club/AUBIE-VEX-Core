@@ -481,7 +481,7 @@ private:
     static double sincf(double x) {
         // lim x->0 sin(x)/x = 1 (by L'Hôpital's rule)
         if (fabs(x) < 1e-6) {
-            return 1;
+            return 1 - (x * x / 6);
         }
         return sinf(x) / x;
     }
@@ -510,7 +510,7 @@ private:
 
         // Lerp position
         double t = samplePos / length;
-        Vector2d pos = dir * t;
+        Vector2d pos = Vector2d(current->data.p.x, current->data.p.y) + (dir * t);
 
         double heading = 0;
 
@@ -528,7 +528,7 @@ private:
             heading = (currHead * (1 - t)) + (nextHead * t);
         } else { // Tank drive
             // Otherwise we must be pointing tangent to the path
-            heading = normalizeAngle(dir.getAngle(Vector2d(1, 0)));
+            heading = normalizeAngle(-dir.getAngle(Vector2d(1, 0)));
         }
 
         return { Point2d(pos.getX(), pos.getY()), heading };
@@ -553,26 +553,35 @@ public:
         double dy = target.p.y - current.p.y;
         double dTheta = normalizeAngle(target.head) - normalizeAngle(current.head);
 
+        Vector2d error = navigation.translateGlobalToLocal(Vector2d(dx, dy));
+
         // Transform to robot frame
-        double ex = (dx * cosf(target.head)) + (dy * sinf(target.head));
-        double ey = -(dx * sinf(target.head)) + (dy * cosf(target.head));
+        //double ex = (dx * cosf(current.head)) + (dy * sinf(current.head));
+        //double ey = -(dx * sinf(current.head)) + (dy * cosf(current.head));
+        double ex = error.getX();
+        double ey = error.getY();
         double eTheta = dTheta;
 
         // Desired linear/angular velocities
         // You could add motion profiles or other fancy stuff here
-        // Going to alias for now since we do not have velocity information in the path
+        // Going to do this for now since we do not have velocity information in the path
         double vd = this->fwdSpeed;
-        double wd = this->rotSpeed;
+        double wd = this->rotSpeed * eTheta;
 
         // Time-varying gain, do not change (change b or zeta instead)
         double k = 2 * this->zeta * sqrtf((wd * wd) + (b * (vd * vd)));
 
-        this->realtiveTargetVel = Vector2d(0, (vd * cosf(eTheta)) + (k * ex));
-        this->targetW = wd + (k * eTheta) + (b * vd * sincf(eTheta) * ey);
+        this->realtiveTargetVel = Vector2d(0, (vd * cosf(eTheta)) + (k * ey));
+        this->targetW = wd + (k * eTheta) + (b * vd * sincf(eTheta) * ex);
 
         // Update sampling position but only progress if we are close
-        if (Vector2d(current.p, target.p).getMagnitude() < 3) {
-            samplePos += deltaT * vd;
+        if (true || (current.p - target.p).getMagnitude() < 10) {
+            samplePos += deltaT * this->fwdSpeed;
+        }
+
+        if (isDone()) {
+            this->targetW = 0;
+            this->realtiveTargetVel = Vector2d(0, 0);
         }
     }
 
@@ -581,72 +590,6 @@ public:
         return predictLinear(pos, realtiveTargetVel.getRotatedVector(M_PI_2 - normalizeAngle(pos.head)), targetW, deltaT);
     }
 
-    bool isDone() override {
-        return tPath->pointingToLastTarget();
-    }
-};
-
-class PurePursitController : public MotionController {
-private:
-    double speed, lookahead, pTurn;
-public:
-    PurePursitController(double speed, double lookahead, double pTurn) {
-        this->speed = speed;
-        this->lookahead = lookahead;
-        this->pTurn = pTurn;
-    }
-
-    void updateVel(double deltaT) override {
-        this->realtiveTargetVel = Vector2d(0, 0);
-        this->targetW = 0;
-
-        if (!tPath) {
-            return;
-        }
-
-        NodePS* prev = tPath->getTarget();
-        if (!prev) { 
-            return;
-        }
-        NodePS* curr = prev->getNext();
-        if (!curr) {
-            return;
-        }
-
-        Vector2d delta = curr->data.p - prev->data.p;
-        positionSet position = navigation.getPosition();
-
-        Point2d target = curr->data.p;
-        // Passed prev point, apply lookahead
-        if ((position.p - prev->data.p).dot(delta) > 0) {
-            double l = lookahead + (position.p - prev->data.p).project(delta).getMagnitude();
-            auto offset = delta * (l / delta.getMagnitude());
-            target = prev->data.p;
-            target = Point2d(target.x + offset.getX(), target.y + offset.getY());
-        }
-
-        double angle = navigation.getRobotNormalVector().getAngle(target - position.p);
-
-        // Passed curr point, go to next point
-        if ((target - curr->data.p).dot(delta) > 0) {
-            tPath->shiftTarget();
-        }
-
-        this->realtiveTargetVel = Vector2d(0, speed);
-        this->targetW = pTurn * angle;
-
-        if (!curr->hasNext()) {
-            target = curr->data.p;
-            // double k = (position.p - target).getMagnitude() / delta.getMagnitude();
-            realtiveTargetVel = realtiveTargetVel/* * fmax(0.5, fmin(1, k * k))*/;
-        }
-    }
-    
-    positionSet predictNextPos(double deltaT) override {
-        auto pos = navigation.getPosition();
-        return predictLinear(pos, realtiveTargetVel.getRotatedVector(M_PI_2 - normalizeAngle(pos.head)), targetW, deltaT);
-    }
-    
     bool isDone() override {
         return tPath->pointingToLastTarget();
     }
