@@ -1,4 +1,7 @@
 #pragma once
+#include "v5.h"
+#include "v5_vcs.h"
+#include "robotmath/robotmath.h"
 
 using namespace vex;
 
